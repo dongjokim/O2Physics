@@ -9,14 +9,13 @@
 # granted to it by virtue of its status as an Intergovernmental Organization
 # or submit itself to any jurisdiction.
 
-add_subdirectory(Core)
-# add_subdirectory(DataModel)
-add_subdirectory(GenericFramework)
-add_subdirectory(FemtoDream)
-add_subdirectory(FemtoWorld)
-add_subdirectory(MultiparticleCorrelations)
-add_subdirectory(Tasks)
-add_subdirectory(TableProducer)
-add_subdirectory(Tutorial)
-add_subdirectory(JCORRAN)
+o2physics_add_library(JCORRAN
+               SOURCES  AliJFFlucAnalysis.cxx
+                        AliJHistManager.cxx
+               PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore)
+
+o2physics_target_root_dictionary(JCORRAN
+              HEADERS AliJFFlucAnalysis.h
+                      AliJHistManager.h
+              LINKDEF JCORRANLinkDef.h)
 
