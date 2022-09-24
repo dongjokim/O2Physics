@@ -78,11 +78,11 @@ AliJBin::AliJBin() : AliJNamed("AliJBin", "%.2f-%2.f", "&Mode=Range", kRange),
 }
 //_____________________________________________________
 AliJBin::AliJBin(TString config, JHistManager* hmg) : AliJNamed("AliJBin", "%.2f-%2.f", "&Mode=Range", kRange),
-                                                         fBinD(0),
-                                                         fBinStr(0),
-                                                         fIsFixedBin(false),
-                                                         fIndexName("H"),
-                                                         fHMG(NULL)
+                                                      fBinD(0),
+                                                      fBinStr(0),
+                                                      fIsFixedBin(false),
+                                                      fIndexName("H"),
+                                                      fHMG(NULL)
 {
   // cout<< config<<endl;
   LOGF(info, "AliJBin: %s", config.Data());
@@ -481,10 +481,10 @@ AliJTH1::AliJTH1() : fDirectory(NULL),
 
 //_____________________________________________________
 AliJTH1::AliJTH1(TString config, JHistManager* hmg) : fDirectory(NULL),
-                                                         fSubDirectory(NULL),
-                                                         fHMG(NULL),
-                                                         fTemplate(NULL),
-                                                         fBins(0)
+                                                      fSubDirectory(NULL),
+                                                      fHMG(NULL),
+                                                      fTemplate(NULL),
+                                                      fBins(0)
 {
   // constructor
   std::vector<TString> t = Tokenize(config, " \t,");
@@ -747,16 +747,16 @@ AliJTH1Derived<T>::~AliJTH1Derived()
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 JHistManager::JHistManager(TString name, TString dirname) : AliJNamed(name, "", "", 0),
-                                                                  fIsLoadMode(false),
-                                                                  fDirectory(gDirectory),
-                                                                  fConfigStr(),
-                                                                  fBin(0),
-                                                                  fHist(0),
-                                                                  fManager(0),
-                                                                  fBinNames(0),
-                                                                  fBinConfigs(0),
-                                                                  fHistNames(0),
-                                                                  fHistConfigs(0)
+                                                            fIsLoadMode(false),
+                                                            fDirectory(gDirectory),
+                                                            fConfigStr(),
+                                                            fBin(0),
+                                                            fHist(0),
+                                                            fManager(0),
+                                                            fBinNames(0),
+                                                            fBinConfigs(0),
+                                                            fHistNames(0),
+                                                            fHistConfigs(0)
 {
   // constructor
   if (dirname.Length() == 0)
@@ -780,16 +780,16 @@ JHistManager::JHistManager(TString name, TString dirname) : AliJNamed(name, "", 
 
 //_____________________________________________________
 JHistManager::JHistManager(const JHistManager& obj) : AliJNamed(obj.fName, obj.fTitle, obj.fOption, obj.fMode),
-                                                               fIsLoadMode(obj.fIsLoadMode),
-                                                               fDirectory(obj.fDirectory),
-                                                               fConfigStr(obj.fConfigStr),
-                                                               fBin(obj.fBin),
-                                                               fHist(obj.fHist),
-                                                               fManager(obj.fManager),
-                                                               fBinNames(obj.fBinNames),
-                                                               fBinConfigs(obj.fBinConfigs),
-                                                               fHistNames(obj.fHistNames),
-                                                               fHistConfigs(obj.fHistConfigs)
+                                                      fIsLoadMode(obj.fIsLoadMode),
+                                                      fDirectory(obj.fDirectory),
+                                                      fConfigStr(obj.fConfigStr),
+                                                      fBin(obj.fBin),
+                                                      fHist(obj.fHist),
+                                                      fManager(obj.fManager),
+                                                      fBinNames(obj.fBinNames),
+                                                      fBinConfigs(obj.fBinConfigs),
+                                                      fHistNames(obj.fHistNames),
+                                                      fHistConfigs(obj.fHistConfigs)
 {
   // copy constructor TODO: proper handling of pointer data members
 }
