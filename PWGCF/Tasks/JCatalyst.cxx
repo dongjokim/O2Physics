@@ -41,7 +41,7 @@
 #include <Math/LorentzVector.h>
 #include <TRandom.h>
 
-#include "AliJO2Catalyst.h"
+#include "JCatalyst.h"
 
 using namespace o2;
 using namespace o2::framework;
@@ -54,7 +54,7 @@ using namespace ROOT::Math;
 
 #define O2_DEFINE_CONFIGURABLE(NAME, TYPE, DEFAULT, HELP) Configurable<TYPE> NAME{#NAME, DEFAULT, HELP};
 
-class AliJO2Catalyst
+class JCatalyst
 {
  public:
   O2_DEFINE_CONFIGURABLE(zvertex, double, 8.0, "Accepted z-vertex range");
@@ -221,5 +221,5 @@ class AliJO2Catalyst
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
-    adaptAnalysisTask<AliJO2Catalyst>(cfgc)};
+    adaptAnalysisTask<JCatalyst>(cfgc)};
 }

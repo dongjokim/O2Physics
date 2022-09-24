@@ -10,11 +10,11 @@
 # or submit itself to any jurisdiction.
 
 o2physics_add_library(JCORRAN
-                        SOURCES AliJFFlucAnalysis.cxx
-                          AliJHistManager.cxx
+                        SOURCES JFFlucAnalysis.cxx
+                          JHistManager.cxx
                             PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore)
 
   o2physics_target_root_dictionary(JCORRAN
-                                     HEADERS AliJFFlucAnalysis.h
-                                       AliJHistManager.h
+                                     HEADERS JFFlucAnalysis.h
+                                       JHistManager.h
                                          LINKDEF JCORRANLinkDef.h)

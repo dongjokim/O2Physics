@@ -11,7 +11,7 @@
 /// \author Dong Jo Kim (djkim@jyu.fi)
 /// \since Sep 2022
 
-#include "AliJHistManager.h"
+#include "JHistManager.h"
 #include <TMath.h>
 using namespace std;
 //////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ AliJBin::AliJBin() : AliJNamed("AliJBin", "%.2f-%2.f", "&Mode=Range", kRange),
   ;
 }
 //_____________________________________________________
-AliJBin::AliJBin(TString config, AliJHistManager* hmg) : AliJNamed("AliJBin", "%.2f-%2.f", "&Mode=Range", kRange),
+AliJBin::AliJBin(TString config, JHistManager* hmg) : AliJNamed("AliJBin", "%.2f-%2.f", "&Mode=Range", kRange),
                                                          fBinD(0),
                                                          fBinStr(0),
                                                          fIsFixedBin(false),
@@ -129,10 +129,10 @@ void AliJBin::FixBin()
     return;
   fIsFixedBin = true;
   if (!fHMG)
-    AddToManager(AliJHistManager::CurrentManager());
+    AddToManager(JHistManager::CurrentManager());
 }
 //_____________________________________________________
-void AliJBin::AddToManager(AliJHistManager* hmg)
+void AliJBin::AddToManager(JHistManager* hmg)
 {
   hmg->Add(this);
 }
@@ -480,7 +480,7 @@ AliJTH1::AliJTH1() : fDirectory(NULL),
 }
 
 //_____________________________________________________
-AliJTH1::AliJTH1(TString config, AliJHistManager* hmg) : fDirectory(NULL),
+AliJTH1::AliJTH1(TString config, JHistManager* hmg) : fDirectory(NULL),
                                                          fSubDirectory(NULL),
                                                          fHMG(NULL),
                                                          fTemplate(NULL),
@@ -605,14 +605,14 @@ void AliJTH1::FixBin()
   this->AliJArrayBase::FixBin();
 
   if (!fHMG) {
-    AddToManager(AliJHistManager::CurrentManager());
+    AddToManager(JHistManager::CurrentManager());
   }
   if (!fDirectory)
     fDirectory = fHMG->GetDirectory();
 }
 
 //_____________________________________________________
-void AliJTH1::AddToManager(AliJHistManager* hmg)
+void AliJTH1::AddToManager(JHistManager* hmg)
 {
   if (fHMG)
     return; // TODO handle error
@@ -741,12 +741,12 @@ AliJTH1Derived<T>::~AliJTH1Derived()
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// AliJHistManager                                                       //
+// JHistManager                                                       //
 //                                                                      //
 // Array Base Class                                                     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-AliJHistManager::AliJHistManager(TString name, TString dirname) : AliJNamed(name, "", "", 0),
+JHistManager::JHistManager(TString name, TString dirname) : AliJNamed(name, "", "", 0),
                                                                   fIsLoadMode(false),
                                                                   fDirectory(gDirectory),
                                                                   fConfigStr(),
@@ -779,7 +779,7 @@ AliJHistManager::AliJHistManager(TString name, TString dirname) : AliJNamed(name
 }
 
 //_____________________________________________________
-AliJHistManager::AliJHistManager(const AliJHistManager& obj) : AliJNamed(obj.fName, obj.fTitle, obj.fOption, obj.fMode),
+JHistManager::JHistManager(const JHistManager& obj) : AliJNamed(obj.fName, obj.fTitle, obj.fOption, obj.fMode),
                                                                fIsLoadMode(obj.fIsLoadMode),
                                                                fDirectory(obj.fDirectory),
                                                                fConfigStr(obj.fConfigStr),
@@ -795,7 +795,7 @@ AliJHistManager::AliJHistManager(const AliJHistManager& obj) : AliJNamed(obj.fNa
 }
 
 //_____________________________________________________
-AliJHistManager& AliJHistManager::operator=(const AliJHistManager& obj)
+JHistManager& JHistManager::operator=(const JHistManager& obj)
 {
   // assignment operator
   if (this != &obj) {
@@ -804,28 +804,28 @@ AliJHistManager& AliJHistManager::operator=(const AliJHistManager& obj)
   return *this;
 }
 
-AliJHistManager* AliJHistManager::GlobalManager()
+JHistManager* JHistManager::GlobalManager()
 {
-  static AliJHistManager* singleton = new AliJHistManager("GlobalHistManager");
+  static JHistManager* singleton = new JHistManager("GlobalHistManager");
   return singleton;
 }
 
-AliJHistManager* AliJHistManager::CurrentManager(AliJHistManager* hmg)
+JHistManager* JHistManager::CurrentManager(JHistManager* hmg)
 {
-  static AliJHistManager* currentManager = NULL; //;AliJHistManager::GlobalManager();
+  static JHistManager* currentManager = NULL; //;JHistManager::GlobalManager();
   if (hmg)
     currentManager = hmg;
   return currentManager;
 }
 
-AliJBin* AliJHistManager::GetBuiltBin(TString s)
+AliJBin* JHistManager::GetBuiltBin(TString s)
 {
   for (int i = 0; i < int(fBin.size()); i++)
     if (fBin[i]->GetName() == s)
       return fBin[i];
   return NULL;
 }
-AliJBin* AliJHistManager::GetBin(TString s)
+AliJBin* JHistManager::GetBin(TString s)
 {
   AliJBin* h = GetBuiltBin(s);
   if (h)
@@ -836,7 +836,7 @@ AliJBin* AliJHistManager::GetBin(TString s)
     }
   return NULL;
 }
-AliJTH1* AliJHistManager::GetBuiltTH1(TString s)
+AliJTH1* JHistManager::GetBuiltTH1(TString s)
 {
   for (int i = 0; i < int(fHist.size()); i++)
     if (fHist[i]->GetName() == s)
@@ -846,7 +846,7 @@ AliJTH1* AliJHistManager::GetBuiltTH1(TString s)
 // Note: Returning NULL crashes the code, something should be done about this.
 // The error given by compiler is: non-const lvalue reference to type 'AliJTH1D' (aka 'AliJTH1Derived<TH1D>') cannot bind to a temporary of type 'long'
 // The reoson for crash is that NULL cannot be used in dynamic_cast<AliJTH1D&>
-AliJTH1* AliJHistManager::GetTH1(TString s)
+AliJTH1* JHistManager::GetTH1(TString s)
 {
   AliJTH1* h = GetBuiltTH1(s);
   if (h)
@@ -864,7 +864,7 @@ AliJTH1* AliJHistManager::GetTH1(TString s)
     }
   return NULL;
 }
-void AliJHistManager::Add(AliJBin* o)
+void JHistManager::Add(AliJBin* o)
 {
   if (!o)
     return;
@@ -872,7 +872,7 @@ void AliJHistManager::Add(AliJBin* o)
     return; // TODO error handle
   fBin.push_back(o);
 }
-void AliJHistManager::Add(AliJTH1* o)
+void JHistManager::Add(AliJTH1* o)
 {
   if (!o)
     return;
@@ -880,14 +880,14 @@ void AliJHistManager::Add(AliJTH1* o)
     return; // TODO error handle
   fHist.push_back(o);
 }
-void AliJHistManager::Print()
+void JHistManager::Print()
 {
   if (IsLoadMode()) {
     // cout<<fConfigStr<<endl;
     LOGF(info, "%s", fConfigStr.Data());
     return;
   }
-  printf("============ AliJHistManager : %s ===================\n", fName.Data());
+  printf("============ JHistManager : %s ===================\n", fName.Data());
   printf("\n---- AliJBin ----\n");
   for (int i = 0; i < GetNBin(); i++) {
     fBin[i]->Print();
@@ -897,13 +897,13 @@ void AliJHistManager::Print()
     fHist[i]->Print();
   }
 }
-void AliJHistManager::Write()
+void JHistManager::Write()
 {
   for (int i = 0; i < GetNHist(); i++)
     fHist[i]->Write();
 }
 
-void AliJHistManager::WriteConfig()
+void JHistManager::WriteConfig()
 {
   TDirectory* owd = fDirectory;
   // cout<<"DEBUG_T1: "<<fDirectory<<endl;
@@ -917,7 +917,7 @@ void AliJHistManager::WriteConfig()
   owd->cd();
 }
 
-int AliJHistManager::LoadConfig()
+int JHistManager::LoadConfig()
 {
   SetLoadMode(true);
   TObjString* strobj = (TObjString*)fDirectory->Get("HistManager/Config");
@@ -941,7 +941,7 @@ int AliJHistManager::LoadConfig()
   return 1;
 }
 
-bool AliJHistManager::HistogramExists(TString name)
+bool JHistManager::HistogramExists(TString name)
 {
   for (int i = 0; i < fHistNames.size(); i++) {
     if (fHistNames[i] == name)
@@ -1000,7 +1000,7 @@ bool OutOf(int i, int x, int y) { return (i < x || i > y); }
 
 void ttestAliJArray()
 {
-  AliJHistManager* fHMG;
+  JHistManager* fHMG;
   AliJBin fCentBin;
   AliJBin fVtxBin;
   AliJBin fPTtBin;
@@ -1022,7 +1022,7 @@ void ttestAliJArray()
   AliJTProfile test2;
 
   TFile* f = new TFile("test.root", "RECREATE");
-  fHMG = AliJHistManager::GlobalManager();
+  fHMG = JHistManager::GlobalManager();
   fCentBin.Set("Cent", "C", "C %2.0f-%2.0f%%").SetBin("0 100");
   fVtxBin.Set("Vtx", "V", "Vtx %.0f-%.0f").SetBin("-10 10");
   fPTtBin.Set("PTt", "T", "p_{Tt} %.1f-%.1f").SetBin("3 5 8 10 15 20");

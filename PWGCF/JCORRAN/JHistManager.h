@@ -38,7 +38,7 @@ class AliJBin;
 class AliJArrayAlgorithm;
 class AliJArrayAlgorithmSimple;
 class AliJTH1;
-class AliJHistManager;
+class JHistManager;
 template <typename t>
 class AliJTH1Derived;
 template <typename t>
@@ -110,11 +110,11 @@ class AliJBin : public AliJNamed
          kString,
          kNMode };
   AliJBin();
-  AliJBin(TString config, AliJHistManager* hmg);
+  AliJBin(TString config, JHistManager* hmg);
   AliJBin(const AliJBin& obj);
   AliJBin& operator=(const AliJBin& obj);
   AliJBin& Set(TString name, TString iname, TString Title, int mode = kRange);
-  void AddToManager(AliJHistManager* hmg);
+  void AddToManager(JHistManager* hmg);
   AliJBin& SetBin(const int n, const float* v);
   AliJBin& SetBin(const int n, const double* v);
   AliJBin& SetBin(TVector* v);
@@ -149,7 +149,7 @@ class AliJBin : public AliJNamed
   std::vector<TString> fBinStr;
   bool fIsFixedBin;
   TString fIndexName;
-  AliJHistManager* fHMG;
+  JHistManager* fHMG;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -300,7 +300,7 @@ class AliJTH1 : public AliJArrayBase
 {
  public:
   AliJTH1();
-  AliJTH1(TString config, AliJHistManager* hmg);
+  AliJTH1(TString config, JHistManager* hmg);
   AliJTH1(const AliJTH1& obj);
   AliJTH1& operator=(const AliJTH1& obj);
   virtual ~AliJTH1();
@@ -312,7 +312,7 @@ class AliJTH1 : public AliJArrayBase
   }
   int AddDim(AliJBin* bin);
   int AddDim(TString v);
-  void AddToManager(AliJHistManager* hmg);
+  void AddToManager(JHistManager* hmg);
   AliJBin* GetBinPtr(int i) { return fBins.at(i); }
 
   // Virtual from AliJArrayBase
@@ -335,7 +335,7 @@ class AliJTH1 : public AliJArrayBase
  protected:
   TDirectory* fDirectory;
   TDirectory* fSubDirectory;
-  AliJHistManager* fHMG;
+  JHistManager* fHMG;
   TH1* fTemplate;
   std::vector<AliJBin*> fBins;
 };
@@ -352,7 +352,7 @@ class AliJTH1Derived : public AliJTH1
  protected:
  public:
   AliJTH1Derived();
-  AliJTH1Derived(TString config, AliJHistManager* hmg) : AliJTH1(config, hmg), fPlayer(this) {}
+  AliJTH1Derived(TString config, JHistManager* hmg) : AliJTH1(config, hmg), fPlayer(this) {}
   virtual ~AliJTH1Derived();
 
   AliJTH1DerivedPlayer<T>& operator[](int i)
@@ -452,17 +452,17 @@ typedef AliJTH1Derived<TProfile> AliJTProfile;
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// AliJHistManager                                                       //
+// JHistManager                                                       //
 //                                                                      //
 // Array Base Class                                                     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-class AliJHistManager : public AliJNamed
+class JHistManager : public AliJNamed
 {
  public:
-  AliJHistManager(TString name, TString dirname = "");
-  AliJHistManager(const AliJHistManager& obj);
-  AliJHistManager& operator=(const AliJHistManager& obj);
+  JHistManager(TString name, TString dirname = "");
+  JHistManager(const JHistManager& obj);
+  JHistManager& operator=(const JHistManager& obj);
   void Add(AliJBin* o);
   void Add(AliJTH1* o);
 
@@ -472,9 +472,9 @@ class AliJHistManager : public AliJNamed
   int LoadConfig();
   TDirectory* GetDirectory() { return fDirectory; }
   void SetDirectory(TDirectory* d) { fDirectory = d; }
-  static AliJHistManager* GlobalManager();
-  static AliJHistManager* CurrentManager(AliJHistManager* hmg = NULL);
-  AliJHistManager* cd() { return AliJHistManager::CurrentManager(this); }
+  static JHistManager* GlobalManager();
+  static JHistManager* CurrentManager(JHistManager* hmg = NULL);
+  JHistManager* cd() { return JHistManager::CurrentManager(this); }
   void SetLoadMode(bool b = true) { fIsLoadMode = b; }
   bool IsLoadMode() { return fIsLoadMode; }
   TString GetString()
@@ -511,7 +511,7 @@ class AliJHistManager : public AliJNamed
   TString fConfigStr;
   std::vector<AliJBin*> fBin;
   std::vector<AliJTH1*> fHist;
-  std::vector<AliJHistManager*> fManager;
+  std::vector<JHistManager*> fManager;
   std::vector<TString> fBinNames;
   std::vector<TString> fBinConfigs;
   std::vector<TString> fHistNames;

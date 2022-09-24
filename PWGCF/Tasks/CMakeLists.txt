@@ -35,11 +35,11 @@ o2physics_add_dpl_workflow(flow-generic-framework
                     COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(jfluc-catalyst
-                    SOURCES AliJO2Catalyst.cxx
+                    SOURCES JCatalyst.cxx
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                     COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(jfluc-analysis
-                    SOURCES AliJO2Analysis.cxx
+                    SOURCES JyuAnalysis.cxx
                     PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::JCORRAN
                     COMPONENT_NAME Analysis)

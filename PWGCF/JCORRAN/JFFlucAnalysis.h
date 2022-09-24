@@ -11,8 +11,8 @@
 /// \author Dong Jo Kim (djkim@jyu.fi)
 /// \since Sep 2022
 
-#ifndef AliJFFlucAnalysis_cxx
-#define AliJFFlucAnalysis_cxx
+#ifndef JFFlucAnalysis_cxx
+#define JFFlucAnalysis_cxx
 
 //#include <AliAnalysisTaskSE.h>
 //#include "AliJEfficiency.h"
@@ -32,15 +32,15 @@ public:
   ~AliJTrackNew(){};
 };*/
 
-class AliJFFlucAnalysis
+class JFFlucAnalysis
 { // : public AliAnalysisTaskSE {
  public:
-  AliJFFlucAnalysis();
-  AliJFFlucAnalysis(const char* name);
-  AliJFFlucAnalysis(const AliJFFlucAnalysis& a);             // not implemented
-  AliJFFlucAnalysis& operator=(const AliJFFlucAnalysis& ap); // not implemented
+  JFFlucAnalysis();
+  JFFlucAnalysis(const char* name);
+  JFFlucAnalysis(const JFFlucAnalysis& a);             // not implemented
+  JFFlucAnalysis& operator=(const JFFlucAnalysis& ap); // not implemented
 
-  virtual ~AliJFFlucAnalysis();
+  virtual ~JFFlucAnalysis();
   virtual void UserCreateOutputObjects();
   virtual void Init();
   virtual void UserExec(Option_t* option);
@@ -218,7 +218,7 @@ class AliJFFlucAnalysis
   // AliJTH1D fh_QvectorQCphi;//!
   AliJTH1D fh_evt_SP_QC_ratio_2p; //! // check SP QC evt by evt ratio
   AliJTH1D fh_evt_SP_QC_ratio_4p; //! // check SP QC evt by evt ratio
-                                  // ClassDef(AliJFFlucAnalysis, 1);
+                                  // ClassDef(JFFlucAnalysis, 1);
 };
 
 #endif
