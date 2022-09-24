@@ -24,8 +24,8 @@
 #include "Common/DataModel/Centrality.h"
 #include "ReconstructionDataFormats/V0.h"
 
-#include "AliJO2Catalyst.h"
-#include "AliJFFlucAnalysis.h"
+#include "JCatalyst.h"
+#include "JFFlucAnalysis.h"
 
 using namespace o2;
 using namespace o2::framework;
@@ -52,9 +52,9 @@ class JFlucAnalysis
     //
     fInputList.reserve(2500);
 
-    pcf = new AliJFFlucAnalysis("jflucAnalysis");
+    pcf = new JFFlucAnalysis("jflucAnalysis");
     pcf->SetNumBins(sizeof(jflucCentBins) / sizeof(jflucCentBins[0]));
-    pcf->AddFlags(AliJFFlucAnalysis::FLUC_EBE_WEIGHTING);
+    pcf->AddFlags(JFFlucAnalysis::FLUC_EBE_WEIGHTING);
 
     output->cd();
     pcf->UserCreateOutputObjects();
@@ -89,7 +89,7 @@ class JFlucAnalysis
     pcf->UserExec("");
   }
   std::vector<PtEtaPhiEVector> fInputList;
-  AliJFFlucAnalysis* pcf;
+  JFFlucAnalysis* pcf;
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)

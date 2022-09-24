@@ -16,7 +16,7 @@
 
 //#include <AliAnalysisTaskSE.h>
 //#include "AliJEfficiency.h"
-#include "AliJHistManager.h"
+#include "JHistManager.h"
 #include <Math/Vector4D.h>
 #include <Math/LorentzVector.h>
 #include <TComplex.h>
@@ -154,7 +154,7 @@ class JFFlucAnalysis
   TComplex QvectorQC[kNH][nKL];
   TComplex QvectorQCeta10[2][kNH][nKL]; // ksub
 
-  AliJHistManager* fHMG; //!
+  JHistManager* fHMG; //!
 
   AliJBin fBin_Subset;  //!
   AliJBin fBin_h;       //!

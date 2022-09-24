@@ -156,7 +156,7 @@ void JFFlucAnalysis::Init()
 //________________________________________________________________________
 void JFFlucAnalysis::UserCreateOutputObjects()
 {
-  fHMG = new AliJHistManager("AliJFFlucHistManager", "jfluc");
+  fHMG = new JHistManager("JFFlucHistManager", "jfluc");
   // set AliJBin here //
   fBin_Subset.Set("Sub", "Sub", "Sub:%d", AliJBin::kSingle).SetBin(2);
   fBin_h.Set("NH", "NH", "NH:%d", AliJBin::kSingle).SetBin(kNH);
