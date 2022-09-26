@@ -218,7 +218,7 @@ class JFFlucAnalysis
   // JTH1D fh_QvectorQCphi;//!
   JTH1D fh_evt_SP_QC_ratio_2p; //! // check SP QC evt by evt ratio
   JTH1D fh_evt_SP_QC_ratio_4p; //! // check SP QC evt by evt ratio
-                                  // ClassDef(JFFlucAnalysis, 1);
+                               // ClassDef(JFFlucAnalysis, 1);
 };
 
 #endif
