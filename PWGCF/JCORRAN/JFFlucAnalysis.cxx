@@ -18,7 +18,7 @@
 #include <TMath.h>
 #include <TComplex.h>
 #include <TClonesArray.h>
-//#include "AliJBaseTrack.h"
+//#include "JBaseTrack.h"
 
 #include "JFFlucAnalysis.h"
 
@@ -157,23 +157,23 @@ void JFFlucAnalysis::Init()
 void JFFlucAnalysis::UserCreateOutputObjects()
 {
   fHMG = new JHistManager("JFFlucHistManager", "jfluc");
-  // set AliJBin here //
-  fBin_Subset.Set("Sub", "Sub", "Sub:%d", AliJBin::kSingle).SetBin(2);
-  fBin_h.Set("NH", "NH", "NH:%d", AliJBin::kSingle).SetBin(kNH);
-  fBin_k.Set("K", "K", "K:%d", AliJBin::kSingle).SetBin(nKL);
+  // set JBin here //
+  fBin_Subset.Set("Sub", "Sub", "Sub:%d", JBin::kSingle).SetBin(2);
+  fBin_h.Set("NH", "NH", "NH:%d", JBin::kSingle).SetBin(kNH);
+  fBin_k.Set("K", "K", "K:%d", JBin::kSingle).SetBin(nKL);
 
-  fBin_hh.Set("NHH", "NHH", "NHH:%d", AliJBin::kSingle).SetBin(kcNH);
-  fBin_kk.Set("KK", "KK", "KK:%d", AliJBin::kSingle).SetBin(nKL);
+  fBin_hh.Set("NHH", "NHH", "NHH:%d", JBin::kSingle).SetBin(kcNH);
+  fBin_kk.Set("KK", "KK", "KK:%d", JBin::kSingle).SetBin(nKL);
 
   // TODO: index with binning the array of pointers
-  fHistCentBin.Set("CentBin", "CentBin", "Cent:%d", AliJBin::kSingle).SetBin(numBins);
+  fHistCentBin.Set("CentBin", "CentBin", "Cent:%d", JBin::kSingle).SetBin(numBins);
 
-  fVertexBin.Set("Vtx", "Vtx", "Vtx:%d", AliJBin::kSingle).SetBin(3);
-  fCorrBin.Set("C", "C", "C:%d", AliJBin::kSingle).SetBin(28);
+  fVertexBin.Set("Vtx", "Vtx", "Vtx:%d", JBin::kSingle).SetBin(3);
+  fCorrBin.Set("C", "C", "C:%d", JBin::kSingle).SetBin(28);
 
-  fBin_Nptbins.Set("PtBin", "PtBin", "Pt:%d", AliJBin::kSingle).SetBin(N_ptbins);
+  fBin_Nptbins.Set("PtBin", "PtBin", "Pt:%d", JBin::kSingle).SetBin(N_ptbins);
 
-  // set AliJTH1D here //
+  // set JTH1D here //
   fh_cent
     << TH1D("h_cent", "h_cent", 200, 0, 100)
     << "END";
@@ -344,7 +344,7 @@ void JFFlucAnalysis::UserCreateOutputObjects()
     << fBin_h
     << fHistCentBin
     << "END"; // fBin_h > not stand for harmonics, only for v2, v3, v4, v5
-  // AliJTH1D set done.
+  // JTH1D set done.
 
   fHMG->Print();
   // fHMG->WriteConfig();
@@ -625,7 +625,7 @@ void JFFlucAnalysis::Terminate(Option_t*)
 void JFFlucAnalysis::Fill_QA_plot(Double_t eta1, Double_t eta2)
 {
   for (Long64_t it = 0, ntracks = fInputList->size(); it < ntracks; it++) {
-    // AliJBaseTrack *itrack = (AliJBaseTrack*)fInputList->At(it); // load track
+    // JBaseTrack *itrack = (JBaseTrack*)fInputList->At(it); // load track
     const PtEtaPhiEVector* itrack = &(*fInputList)[it];
     Double_t eta = itrack->Eta();
     Double_t phi = itrack->Phi();
@@ -637,7 +637,7 @@ void JFFlucAnalysis::Fill_QA_plot(Double_t eta1, Double_t eta2)
     if (TMath::Abs(eta) < eta1 || TMath::Abs(eta) > eta2)
       continue;
 
-    Double_t phi_module_corr = 1.0; // itrack->GetWeight();// doing it in AliJFlucTask while filling track information. //XXXXXX
+    Double_t phi_module_corr = 1.0; // itrack->GetWeight();// doing it in JFlucTask while filling track information. //XXXXXX
 
     Double_t pt = itrack->Pt();
     Double_t effCorr = 1.0; // itrack->GetTrackEff();//fEfficiency->GetCorrection( pt, fEffFilterBit, fCent); //XXXXXX
@@ -676,9 +676,9 @@ void JFFlucAnalysis::CalculateQvectorsQC(double etamin, double etamax)
   // for( Long64_t it=0; it<ntracks; it++){
   for (Long64_t it = 0, ntracks = fInputList->size(); it < ntracks; it++) {
     const PtEtaPhiEVector* itrack = &(*fInputList)[it];
-    // AliJBaseTrack *itrack = (AliJBaseTrack*)fInputList->At(it); // load track
+    // JBaseTrack *itrack = (JBaseTrack*)fInputList->At(it); // load track
     Double_t eta = itrack->Eta();
-    // track Eta cut Note! pt cuts already applied in AliJFFlucTask.cxx
+    // track Eta cut Note! pt cuts already applied in JFFlucTask.cxx
     // Do we need arbitary Eta cut for QC method?
     // fixed eta ranged -0.8 < eta < 0.8 for QC
     // if( TMath::Abs(eta) > fEta_max || TMath::Abs(eta) < fEta_min ) continue; << this is SP cut
