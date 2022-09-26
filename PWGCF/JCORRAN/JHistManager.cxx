@@ -248,7 +248,7 @@ TString JBin::GetString()
 void JBin::Print()
 {
   // std::cout<<"*"+GetString()<<std::endl;
-  printf("*%s", GetString().Data());
+  LOGF(info,"*%s", GetString().Data());
 }
 
 int JBin::GetBin(double x)

@@ -54,7 +54,7 @@ class JFlucAnalysis
 
     pcf = new JFFlucAnalysis("jflucAnalysis");
     pcf->SetNumBins(sizeof(jflucCentBins) / sizeof(jflucCentBins[0]));
-    pcf->AddFlags(JFFlucAnalysis::FLUC_EBE_WEIGHTING);
+    pcf->AddFlags(JFFlucAnalysis::kFluc_Ebe_Weightening);
 
     output->cd();
     pcf->UserCreateOutputObjects();

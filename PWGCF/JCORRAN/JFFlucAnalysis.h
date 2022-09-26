@@ -82,8 +82,8 @@ class JFFlucAnalysis
   TComplex Four(int n1, int n2, int n3, int n4);
 
   enum SUBEVENT {
-    SUBEVENT_A = 0x1,
-    SUBEVENT_B = 0x2
+    kSub_Event_A = 0x1,
+    kSub_Event_B = 0x2
   };
   void SelectSubevents(UInt_t _subeventMask)
   {
@@ -95,8 +95,8 @@ class JFFlucAnalysis
     numBins = _numBins;
   }
   enum {
-    FLUC_PHI_CORRECTION = 0x2,
-    FLUC_EBE_WEIGHTING = 0x4
+    kFluc_Phi_Correction = 0x2,
+    kFluc_Ebe_Weightening = 0x4
   };
   void AddFlags(UInt_t _flags)
   {
