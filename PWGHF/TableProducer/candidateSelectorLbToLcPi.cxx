@@ -14,40 +14,58 @@
 ///
 /// \author Panos Christakoglou <panos.christakoglou@cern.ch>, Nikhef
 
-#include "Framework/runDataProcessing.h"
+#include "CommonConstants/PhysicsConstants.h"
 #include "Framework/AnalysisTask.h"
+#include "Framework/runDataProcessing.h"
+
+#include "Common/Core/TrackSelectorPID.h"
+
+#include "PWGHF/Core/HfHelper.h"
 #include "PWGHF/Core/SelectorCuts.h"
 #include "PWGHF/DataModel/CandidateReconstructionTables.h"
 #include "PWGHF/DataModel/CandidateSelectionTables.h"
-#include "PWGHF/Core/SelectorCuts.h"
 
 using namespace o2;
 using namespace o2::aod;
 using namespace o2::framework;
-using namespace o2::aod::hf_cand_lb;
 using namespace o2::analysis;
-using namespace o2::aod::hf_cand_2prong;
-using namespace o2::analysis::hf_cuts_lb_to_lc_pi;
 
 struct HfCandidateSelectorLbToLcPi {
   Produces<aod::HfSelLbToLcPi> hfSelLbToLcPiCandidate;
 
-  Configurable<double> ptCandMin{"ptCandMin", 0., "Lower bound of candidate pT"};
-  Configurable<double> ptCandMax{"ptCandMax", 50., "Upper bound of candidate pT"};
+  Configurable<float> ptCandMin{"ptCandMin", 0., "Lower bound of candidate pT"};
+  Configurable<float> ptCandMax{"ptCandMax", 50., "Upper bound of candidate pT"};
   // TPC PID
-  Configurable<double> ptPidTpcMin{"ptPidTpcMin", 0.15, "Lower bound of track pT for TPC PID"};
-  Configurable<double> ptPidTpcMax{"ptPidTpcMax", 10., "Upper bound of track pT for TPC PID"};
-  Configurable<double> nSigmaTpcMax{"nSigmaTpcMax", 5., "Nsigma cut on TPC only"};
-  Configurable<double> nSigmaTpcCombinedMax{"nSigmaTpcCombinedMax", 5., "Nsigma cut on TPC combined with TOF"};
+  Configurable<float> ptPidTpcMin{"ptPidTpcMin", 0.15, "Lower bound of track pT for TPC PID"};
+  Configurable<float> ptPidTpcMax{"ptPidTpcMax", 10., "Upper bound of track pT for TPC PID"};
+  Configurable<float> nSigmaTpcMax{"nSigmaTpcMax", 5., "Nsigma cut on TPC only"};
+  Configurable<float> nSigmaTpcCombinedMax{"nSigmaTpcCombinedMax", 5., "Nsigma cut on TPC combined with TOF"};
   // TOF PID
-  Configurable<double> ptPidTofMin{"ptPidTofMin", 0.15, "Lower bound of track pT for TOF PID"};
-  Configurable<double> ptPidTofMax{"ptPidTofMax", 10., "Upper bound of track pT for TOF PID"};
-  Configurable<double> nSigmaTofMax{"nSigmaTofMax", 5., "Nsigma cut on TOF only"};
-  Configurable<double> nSigmaTofCombinedMax{"nSigmaTofCombinedMax", 5., "Nsigma cut on TOF combined with TPC"};
+  Configurable<float> ptPidTofMin{"ptPidTofMin", 0.15, "Lower bound of track pT for TOF PID"};
+  Configurable<float> ptPidTofMax{"ptPidTofMax", 10., "Upper bound of track pT for TOF PID"};
+  Configurable<float> nSigmaTofMax{"nSigmaTofMax", 5., "Nsigma cut on TOF only"};
+  Configurable<float> nSigmaTofCombinedMax{"nSigmaTofCombinedMax", 5., "Nsigma cut on TOF combined with TPC"};
   // topological cuts
   Configurable<std::vector<double>> binsPt{"binsPt", std::vector<double>{hf_cuts_lb_to_lc_pi::vecBinsPt}, "pT bin limits"};
-  Configurable<LabeledArray<double>> cuts{"cuts", {hf_cuts_lb_to_lc_pi::cuts[0], nBinsPt, nCutVars, labelsPt, labelsCutVar}, "Lb0 candidate selection per pT bin"};
+  Configurable<float> impactParameterMaximum{"impactParameterMaximum", 0.2, "Maximum impact parameter for single tracks"};
+  Configurable<float> maxDecayLengthError{"maxDecayLengthError", 0.015, "decay length error quality selection"};
+  Configurable<float> maxDecayLengthXYError{"maxDecayLengthXYError", 0.01, "decay length xy error quality selection"};
+  Configurable<float> maxVertexDistanceLbLc{"maxVertexDistanceLbLc", 0.05, "maximum distance between Lb and Lc vertex"};
+  Configurable<LabeledArray<double>> cuts{"cuts", {hf_cuts_lb_to_lc_pi::cuts[0], hf_cuts_lb_to_lc_pi::nBinsPt, hf_cuts_lb_to_lc_pi::nCutVars, hf_cuts_lb_to_lc_pi::labelsPt, hf_cuts_lb_to_lc_pi::labelsCutVar}, "Lb0 candidate selection per pT bin"};
   Configurable<int> selectionFlagLc{"selectionFlagLc", 1, "Selection Flag for Lc+"};
+
+  HfHelper hfHelper;
+
+  using TracksWExt = soa::Join<o2::aod::Tracks, o2::aod::TracksExtra, aod::TrackSelection, o2::aod::TrackSelectionExtension, aod::TracksPidPi, aod::PidTpcTofFullPi, aod::TracksPidKa, aod::PidTpcTofFullKa, aod::pidTPCFullPi>;
+
+  bool passesImpactParameterResolution(float pT, float d0Resolution)
+  {
+    float expectedResolution(0.001 + 0.0052 * exp(-0.655 * pT));
+    if (d0Resolution > expectedResolution * 1.5)
+      return false;
+    else
+      return true;
+  } // Compares to pT dependent cut on impact parameter resolution
 
   // Apply topological cuts as defined in SelectorCuts.h; return true if candidate passes all cuts
   template <typename T1, typename T2, typename T3>
@@ -56,7 +74,7 @@ struct HfCandidateSelectorLbToLcPi {
     auto candpT = hfCandLb.pt();
     int pTBin = findBin(binsPt, candpT);
     if (pTBin == -1) {
-      // Printf("Lb topol selection failed at getpTBin");
+      // LOGF(debug, "Lb topol selection failed at getpTBin");
       return false;
     }
 
@@ -65,9 +83,9 @@ struct HfCandidateSelectorLbToLcPi {
       return false;
     }
 
-    //Λb0 mass cut
-    if (std::abs(invMassLbToLcPi(hfCandLb) - RecoDecay::getMassPDG(pdg::Code::kLambdaB0)) > cuts->get(pTBin, "m")) {
-      // Printf("Lb topol selection failed at mass diff check");
+    // Λb0 mass cut
+    if (std::abs(hfHelper.invMassLbToLcPi(hfCandLb) - o2::constants::physics::MassLambdaB0) > cuts->get(pTBin, "m")) {
+      // LOGF(debug, "Lb topol selection failed at mass diff check");
       return false;
     }
 
@@ -81,12 +99,18 @@ struct HfCandidateSelectorLbToLcPi {
       return false;
     }
 
-    // Lc mass
-    // if (trackPi.sign() < 0) {
-    // if (std::abs(invMassLcToPKPi(hfCandLc) - RecoDecay::getMassPDG(pdg::Code::kLambdaCPlus)) > cuts->get(pTBin, "DeltaMLc")) {
-    // return false;
-    // }
-    // }
+    float lcMass = 0.;
+    if (hfCandLc.isSelLcToPKPi())
+      lcMass = hfHelper.invMassLcToPKPi(hfCandLc);
+    if (hfCandLc.isSelLcToPiKP())
+      lcMass = hfHelper.invMassLcToPiKP(hfCandLc);
+    if (std::abs(lcMass - o2::constants::physics::MassLambdaCPlus) > cuts->get(pTBin, "DeltaMLc"))
+      return false;
+
+    if (hfCandLb.errorDecayLengthXY() > maxDecayLengthXYError)
+      return false;
+    if (hfCandLb.errorDecayLength() > maxDecayLengthError)
+      return false;
 
     // Lb Decay length
     if (hfCandLb.decayLength() < cuts->get(pTBin, "Lb decLen")) {
@@ -100,7 +124,7 @@ struct HfCandidateSelectorLbToLcPi {
 
     // Lb chi2PCA cut
     if (hfCandLb.chi2PCA() > cuts->get(pTBin, "Chi2PCA")) {
-      // Printf("Lb selection failed at chi2PCA");
+      // LOGF(debug, "Lb selection failed at chi2PCA");
       return false;
     }
 
@@ -119,36 +143,79 @@ struct HfCandidateSelectorLbToLcPi {
       return false;
     }
 
+    // distance between Lb and Lc decay
+    float diffXVert = hfCandLb.xSecondaryVertex() - hfCandLc.xSecondaryVertex();
+    float diffYVert = hfCandLb.ySecondaryVertex() - hfCandLc.ySecondaryVertex();
+    float diffZVert = hfCandLb.zSecondaryVertex() - hfCandLc.zSecondaryVertex();
+    float vertexDistance = sqrt(diffXVert * diffXVert + diffYVert * diffYVert + diffZVert * diffZVert);
+    if (vertexDistance > maxVertexDistanceLbLc) {
+      return false;
+    }
+
     return true;
   }
 
-  void process(aod::HfCandLb const& hfCandLbs, soa::Join<aod::HfCand3Prong const&, aod::HfSelLc> const&, aod::BigTracksPID const&)
+  void process(aod::HfCandLb const& hfCandLbs,
+               soa::Join<aod::HfCand3Prong, aod::HfSelLc> const&,
+               TracksWExt const&)
   {
-    for (auto& hfCandLb : hfCandLbs) { // looping over Lb candidates
+    for (const auto& hfCandLb : hfCandLbs) { // looping over Lb candidates
 
       int statusLb = 0;
 
       // check if flagged as Λb --> Λc+ π-
       if (!(hfCandLb.hfflag() & 1 << hf_cand_lb::DecayType::LbToLcPi)) {
         hfSelLbToLcPiCandidate(statusLb);
-        // Printf("Lb candidate selection failed at hfflag check");
+        // LOGF(debug, "Lb candidate selection failed at hfflag check");
         continue;
       }
 
       // Lc is always index0 and pi is index1 by default
       // auto candLc = hfCandLb.prong0();
       auto candLc = hfCandLb.prong0_as<soa::Join<aod::HfCand3Prong, aod::HfSelLc>>();
-      auto trackPi = hfCandLb.prong1_as<aod::BigTracksPID>();
+      auto trackPi = hfCandLb.prong1_as<TracksWExt>();
+
+      // Check that the impact parameter resolution is not too far from the typical
+      auto track0 = candLc.prong0_as<TracksWExt>();
+      auto track1 = candLc.prong1_as<TracksWExt>();
+      auto track2 = candLc.prong2_as<TracksWExt>();
+      float reso0 = candLc.errorImpactParameter0();
+      float reso1 = candLc.errorImpactParameter1();
+      float reso2 = candLc.errorImpactParameter2();
+      if (!passesImpactParameterResolution(track0.pt(), reso0) || !passesImpactParameterResolution(track1.pt(), reso1) || !passesImpactParameterResolution(track2.pt(), reso2) || !passesImpactParameterResolution(trackPi.pt(), hfCandLb.errorImpactParameter1())) {
+        hfSelLbToLcPiCandidate(statusLb);
+        continue;
+      }
+
+      // Maximum single-track impact parameter selection to suppress strange background
+      if (std::abs(hfCandLb.impactParameter1()) > impactParameterMaximum || candLc.impactParameter0() > impactParameterMaximum || candLc.impactParameter1() > impactParameterMaximum || candLc.impactParameter2() > impactParameterMaximum) {
+        hfSelLbToLcPiCandidate(statusLb);
+        continue;
+      }
 
       // topological cuts
       if (!selectionTopol(hfCandLb, candLc, trackPi)) {
         hfSelLbToLcPiCandidate(statusLb);
-        // Printf("Lb candidate selection failed at selection topology");
+        // LOGF(debug, "Lb candidate selection failed at selection topology");
         continue;
       }
 
+      // PID selection for pion
+      if (trackPi.pt() > ptPidTpcMin && trackPi.pt() < ptPidTpcMax) {
+        if (std::abs(trackPi.tpcNSigmaPi()) > nSigmaTpcMax) {
+          hfSelLbToLcPiCandidate(statusLb);
+          continue;
+        }
+      }
+      if (trackPi.pt() > ptPidTofMin && trackPi.pt() < ptPidTofMax) {
+        if (std::abs(trackPi.tofNSigmaPi()) > nSigmaTofMax) {
+          hfSelLbToLcPiCandidate(statusLb);
+          continue;
+        }
+      }
+
       hfSelLbToLcPiCandidate(1);
-      // Printf("Lb candidate selection successful, candidate should be selected");
+      // LOGF(debug, "Lb candidate selection successful, candidate should be selected");
     }
   }
 };

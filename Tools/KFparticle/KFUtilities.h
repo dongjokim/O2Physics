@@ -13,6 +13,7 @@
 /// \brief Utilities needed for the KFParticle package
 ///
 /// \author Annalena Kalteyer <annalena.sophie.kalteyer@cern.ch>, GSI Darmstadt
+/// \author Carolina Reetz <c.reetz@cern.ch>, Heidelberg University
 
 #ifndef TOOLS_KFPARTICLE_KFUTILITIES_H_
 #define TOOLS_KFPARTICLE_KFUTILITIES_H_
@@ -20,6 +21,8 @@
 #ifndef HomogeneousField
 #define HomogeneousField
 #endif
+
+#include <TDatabasePDG.h> // FIXME
 
 #include "KFParticle.h"
 #include "KFPTrack.h"
@@ -43,8 +46,8 @@ KFPVertex createKFPVertexFromCollision(const T& collision)
   kfpVertex.SetXYZ(collision.posX(), collision.posY(), collision.posZ());
   kfpVertex.SetCovarianceMatrix(collision.covXX(), collision.covXY(), collision.covYY(), collision.covXZ(), collision.covYZ(), collision.covZZ());
   kfpVertex.SetChi2(collision.chi2());
-  kfpVertex.SetNDF(2 * collision.multNTracksPV() - 3);
-  kfpVertex.SetNContributors(collision.multNTracksPV());
+  kfpVertex.SetNDF(2 * collision.numContrib() - 3);
+  kfpVertex.SetNContributors(collision.numContrib());
   return kfpVertex;
 }
 
@@ -56,9 +59,9 @@ KFPTrack createKFPTrack(const o2::track::TrackParametrizationWithError<float>& t
                         int16_t tpcNClsFound,
                         float tpcChi2NCl)
 {
-  array<float, 3> trkpos_par;
-  array<float, 3> trkmom_par;
-  array<float, 21> trk_cov;
+  std::array<float, 3> trkpos_par;
+  std::array<float, 3> trkmom_par;
+  std::array<float, 21> trk_cov;
   trackparCov.getXYZGlo(trkpos_par);
   trackparCov.getPxPyPzGlo(trkmom_par);
   trackparCov.getCovXYZPxPyPzGlo(trk_cov);
@@ -103,6 +106,75 @@ KFPTrack createKFPTrackFromTrackParCov(const o2::track::TrackParametrizationWith
   return kfpTrack;
 }
 
+/// @brief Function to create a KFParticle from a o2::track::TrackParametrizationWithError track
+/// @tparam T
+/// @param trackparCov TrackParCov
+/// @param charge charg of track
+/// @param mass mass hypothesis
+/// @return KFParticle
+template <typename T>
+KFParticle createKFParticleFromTrackParCov(const o2::track::TrackParametrizationWithError<T>& trackparCov, int charge, float mass)
+{
+  std::array<T, 3> xyz, pxpypz;
+  float xyzpxpypz[6];
+  trackparCov.getPxPyPzGlo(pxpypz);
+  trackparCov.getXYZGlo(xyz);
+  for (int i{0}; i < 3; ++i) {
+    xyzpxpypz[i] = xyz[i];
+    xyzpxpypz[i + 3] = pxpypz[i];
+  }
+
+  std::array<float, 21> cv;
+  try {
+    trackparCov.getCovXYZPxPyPzGlo(cv);
+  } catch (std::runtime_error& e) {
+    LOG(debug) << "Failed to get cov matrix from TrackParCov" << e.what();
+  }
+
+  KFParticle kfPart;
+  float Mini, SigmaMini, M, SigmaM;
+  kfPart.GetMass(Mini, SigmaMini);
+  LOG(debug) << "Daughter KFParticle mass before creation: " << Mini << " +- " << SigmaMini;
+
+  try {
+    kfPart.Create(xyzpxpypz, cv.data(), charge, mass);
+  } catch (std::runtime_error& e) {
+    LOG(debug) << "Failed to create KFParticle from daughter TrackParCov" << e.what();
+  }
+
+  kfPart.GetMass(M, SigmaM);
+  LOG(debug) << "Daughter KFParticle mass after creation: " << M << " +- " << SigmaM;
+  return kfPart;
+}
+
+/// @brief Function to create a o2::track::TrackParametrizationWithError track from a KFParticle
+/// @param kfParticle KFParticle to transform
+/// @param pid PID hypothesis
+/// @param sign sign of the particle
+/// @return o2::track::TrackParametrizationWithError track
+o2::track::TrackParCov getTrackParCovFromKFP(const KFParticle& kfParticle, const o2::track::PID pid, const int sign)
+{
+  o2::gpu::gpustd::array<float, 3> xyz, pxpypz;
+  o2::gpu::gpustd::array<float, 21> cv;
+
+  // get parameters from kfParticle
+  xyz[0] = kfParticle.GetX();
+  xyz[1] = kfParticle.GetY();
+  xyz[2] = kfParticle.GetZ();
+  pxpypz[0] = kfParticle.GetPx();
+  pxpypz[1] = kfParticle.GetPy();
+  pxpypz[2] = kfParticle.GetPz();
+
+  // set covariance matrix elements (lower triangle)
+  for (int i = 0; i < 21; i++) {
+    cv[i] = kfParticle.GetCovariance(i);
+  }
+
+  // create TrackParCov track
+  o2::track::TrackParCov track = o2::track::TrackParCov(xyz, pxpypz, cv, sign, true, pid);
+  return track;
+}
+
 /// @brief Cosine of pointing angle from KFParticles
 /// @param kfp KFParticle
 /// @param PV KFParticle primary vertex
@@ -123,7 +195,7 @@ float cpaFromKF(KFParticle kfp, KFParticle PV)
   py = kfp.GetPy();
   pz = kfp.GetPz();
 
-  float cpa = RecoDecay::cpa(array{xVtxP, yVtxP, zVtxP}, array{xVtxS, yVtxS, zVtxS}, array{px, py, pz});
+  float cpa = RecoDecay::cpa(std::array{xVtxP, yVtxP, zVtxP}, std::array{xVtxS, yVtxS, zVtxS}, std::array{px, py, pz});
   return cpa;
 }
 
@@ -144,7 +216,7 @@ float cpaXYFromKF(KFParticle kfp, KFParticle PV)
   px = kfp.GetPx();
   py = kfp.GetPy();
 
-  float cpaXY = RecoDecay::cpaXY(array{xVtxP, yVtxP}, array{xVtxS, yVtxS}, array{px, py});
+  float cpaXY = RecoDecay::cpaXY(std::array{xVtxP, yVtxP}, std::array{xVtxS, yVtxS}, std::array{px, py});
   return cpaXY;
 }
 
@@ -168,13 +240,13 @@ float cosThetaStarFromKF(int ip, int pdgvtx, int pdgprong0, int pdgprong1, KFPar
   px1 = kfpprong1.GetPx();
   py1 = kfpprong1.GetPy();
   pz1 = kfpprong1.GetPz();
-  array<double, 2> m = {0., 0.};
-  m[0] = TDatabasePDG::Instance()->GetParticle(pdgprong0)->Mass();
-  m[1] = TDatabasePDG::Instance()->GetParticle(pdgprong1)->Mass();
-  double mTot = TDatabasePDG::Instance()->GetParticle(pdgvtx)->Mass();
+  std::array<double, 2> m = {0., 0.};
+  m[0] = TDatabasePDG::Instance()->GetParticle(pdgprong0)->Mass();     // FIXME: Get from the PDG service of the common header
+  m[1] = TDatabasePDG::Instance()->GetParticle(pdgprong1)->Mass();     // FIXME: Get from the PDG service of the common header
+  double mTot = TDatabasePDG::Instance()->GetParticle(pdgvtx)->Mass(); // FIXME: Get from the PDG service of the common header
   int iProng = ip;
 
-  float cosThetastar = RecoDecay::cosThetaStar(array{array{px0, py0, pz0}, array{px1, py1, pz1}}, m, mTot, iProng);
+  float cosThetastar = RecoDecay::cosThetaStar(std::array{std::array{px0, py0, pz0}, std::array{px1, py1, pz1}}, m, mTot, iProng);
   return cosThetastar;
 }
 
@@ -200,7 +272,7 @@ float impParXYFromKF(KFParticle kfpParticle, KFParticle Vertex)
   py = kfpParticle.GetPy();
   pz = kfpParticle.GetPz();
 
-  float impParXY = RecoDecay::impParXY(array{xVtxP, yVtxP, zVtxP}, array{xVtxS, yVtxS, zVtxS}, array{px, py, pz});
+  float impParXY = RecoDecay::impParXY(std::array{xVtxP, yVtxP, zVtxP}, std::array{xVtxS, yVtxS, zVtxS}, std::array{px, py, pz});
   return impParXY;
 }
 

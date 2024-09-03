@@ -17,6 +17,7 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Common/DataModel/CaloClusters.h"
+#include "PHOSBase/Geometry.h"
 #include "PWGEM/PhotonMeson/DataModel/gammaTables.h"
 
 using namespace o2;
@@ -42,7 +43,7 @@ struct skimmerPHOS {
     hPHOSClusterFilter->GetXaxis()->SetBinLabel(5, "out");
   }
 
-  void process(aod::Collisions const&, aod::BCs const&, aod::CaloClusters const& clusters, aod::Tracks const& tracks)
+  void process(aod::Collisions const&, aod::BCs const&, aod::CaloClusters const& clusters, aod::Tracks const&)
   {
     for (auto& cluster : clusters) {
       registry.fill(HIST("hPHOSClusterFilter"), 1);
@@ -61,11 +62,16 @@ struct skimmerPHOS {
       }
 
       registry.fill(HIST("hPHOSClusterFilter"), 5);
+
+      char relid[3] = {0, 0, 0};
+      o2::phos::Geometry::relPosToRelId(cluster.mod(), cluster.x(), cluster.z(), relid);
+
       // TODO change track variable to propagated track variables when avaiable!
       tablePHOS(
         cluster.collisionId(), cluster.trackIndex(),
         cluster.e(), cluster.globalx(), cluster.globaly(), cluster.globalz(),
-        cluster.m02(), cluster.m20(), cluster.ncell(), cluster.time(), cluster.distBad(), cluster.nlm());
+        cluster.m02(), cluster.m20(), cluster.ncell(), cluster.time(), cluster.distBad(), cluster.nlm(),
+        cluster.mod(), relid[1], relid[2]);
       // cluster.trackIndex().eta(), cluster.trackIndex().phi(), cluster.trackIndex().p(), cluster.trackIndex().pt());
     }
   }

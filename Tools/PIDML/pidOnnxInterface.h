@@ -14,14 +14,16 @@
 ///
 /// \author Maja Kabus <mkabus@cern.ch>
 
-#ifndef O2_ANALYSIS_PIDONNXINTERFACE_H_
-#define O2_ANALYSIS_PIDONNXINTERFACE_H_
-
-#include "Framework/Array2D.h"
-#include "Tools/PIDML/pidOnnxModel.h"
+#ifndef TOOLS_PIDML_PIDONNXINTERFACE_H_
+#define TOOLS_PIDML_PIDONNXINTERFACE_H_
 
 #include <string>
 #include <array>
+#include <set>
+#include <vector>
+
+#include "Framework/Array2D.h"
+#include "Tools/PIDML/pidOnnxModel.h"
 
 namespace pidml_pt_cuts
 {
@@ -34,20 +36,17 @@ auto certainties_v = std::vector<double>{certainties, certainties + nPids};
 
 // default values for the cuts
 constexpr double cuts[nPids][nCutVars] = {{0.0, 0.5, 0.8}, {0.0, 0.5, 0.8}, {0.0, 0.5, 0.8}, {0.0, 0.5, 0.8}, {0.0, 0.5, 0.8}, {0.0, 0.5, 0.8}};
-
 // row labels
 static const std::vector<std::string> pidLabels = {
   "211", "321", "2212", "0211", "0321", "02212"};
 // column labels
 static const std::vector<std::string> cutVarLabels = {
   "TPC", "TPC + TOF", "TPC + TOF + TRD"};
+
 } // namespace pidml_pt_cuts
 
-using namespace pidml_pt_cuts;
-using namespace o2::framework;
-
 struct PidONNXInterface {
-  PidONNXInterface(std::string& localPath, std::string& ccdbPath, bool useCCDB, o2::ccdb::CcdbApi& ccdbApi, uint64_t timestamp, std::vector<int> const& pids, LabeledArray<double> const& pTLimits, std::vector<double> const& minCertainties, bool autoMode) : mNPids{pids.size()}, mPTLimits{pTLimits}
+  PidONNXInterface(std::string& localPath, std::string& ccdbPath, bool useCCDB, o2::ccdb::CcdbApi& ccdbApi, uint64_t timestamp, std::vector<int> const& pids, o2::framework::LabeledArray<double> const& pLimits, std::vector<double> const& minCertainties, bool autoMode) : mNPids{pids.size()}, mPLimits{pLimits}
   {
     if (pids.size() == 0) {
       LOG(fatal) << "PID ML Interface needs at least 1 output pid to predict";
@@ -55,7 +54,7 @@ struct PidONNXInterface {
     std::set<int> tmp;
     for (auto& pid : pids) {
       if (!tmp.insert(pid).second) {
-        LOG(fatal) << "PID M Interface: output pids cannot repeat!";
+        LOG(fatal) << "PID ML Interface: output pids cannot repeat!";
       }
     }
 
@@ -69,9 +68,7 @@ struct PidONNXInterface {
       minCertaintiesFilled = minCertainties;
     }
     for (std::size_t i = 0; i < mNPids; i++) {
-      for (uint32_t j = 0; j < kNDetectors; j++) {
-        mModels.emplace_back(localPath, ccdbPath, useCCDB, ccdbApi, timestamp, pids[i], (PidMLDetector)(kTPCOnly + j), minCertaintiesFilled[i]);
-      }
+      mModels.emplace_back(localPath, ccdbPath, useCCDB, ccdbApi, timestamp, pids[i], minCertaintiesFilled[i], mPLimits[i]);
     }
   }
   PidONNXInterface() = default;
@@ -85,12 +82,8 @@ struct PidONNXInterface {
   float applyModel(const T& track, int pid)
   {
     for (std::size_t i = 0; i < mNPids; i++) {
-      if (mModels[i * kNDetectors].mPid == pid) {
-        for (uint32_t j = 0; j < kNDetectors; j++) {
-          if (track.pt() >= mPTLimits[i][j] && (j == kNDetectors - 1 || track.pt() < mPTLimits[i][j + 1])) {
-            return mModels[i * kNDetectors + j].applyModel(track);
-          }
-        }
+      if (mModels[i].mPid == pid) {
+        return mModels[i].applyModel(track);
       }
     }
     LOG(error) << "No suitable PID ML model found for track: " << track.globalIndex() << " from collision: " << track.collision().globalIndex() << " and expected pid: " << pid;
@@ -101,12 +94,8 @@ struct PidONNXInterface {
   bool applyModelBoolean(const T& track, int pid)
   {
     for (std::size_t i = 0; i < mNPids; i++) {
-      if (mModels[i * kNDetectors].mPid == pid) {
-        for (uint32_t j = 0; j < kNDetectors; j++) {
-          if (track.pt() >= mPTLimits[i][j] && (j == kNDetectors - 1 || track.pt() < mPTLimits[i][j + 1])) {
-            return mModels[i * kNDetectors + j].applyModelBoolean(track);
-          }
-        }
+      if (mModels[i].mPid == pid) {
+        return mModels[i].applyModelBoolean(track);
       }
     }
     LOG(error) << "No suitable PID ML model found for track: " << track.globalIndex() << " from collision: " << track.collision().globalIndex() << " and expected pid: " << pid;
@@ -117,12 +106,12 @@ struct PidONNXInterface {
   void fillDefaultConfiguration(std::vector<double>& minCertainties)
   {
     // FIXME: A more sophisticated strategy should be based on pid values as well
-    mPTLimits = LabeledArray{cuts[0], nPids, nCutVars, pidLabels, cutVarLabels};
+    mPLimits = o2::framework::LabeledArray{pidml_pt_cuts::cuts[0], pidml_pt_cuts::nPids, pidml_pt_cuts::nCutVars, pidml_pt_cuts::pidLabels, pidml_pt_cuts::cutVarLabels};
     minCertainties = std::vector<double>(mNPids, 0.5);
   }
 
   std::vector<PidONNXModel> mModels;
   std::size_t mNPids;
-  LabeledArray<double> mPTLimits;
+  o2::framework::LabeledArray<double> mPLimits;
 };
-#endif // O2_ANALYSIS_PIDONNXINTERFACE_H_
+#endif // TOOLS_PIDML_PIDONNXINTERFACE_H_

@@ -9,6 +9,7 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
+#include <string>
 #include "CommonConstants/PhysicsConstants.h"
 #include "DGPIDSelector.h"
 
@@ -122,21 +123,146 @@ DGAnaparHolder::~DGAnaparHolder()
 void DGAnaparHolder::Print()
 {
   LOGF(info, "  DGAnaparHolder");
-  LOGF(info, "    nCombine:    %i", mNCombine);
-  LOGF(info, "    max dcaxy:   %f", mMaxDCAxy);
-  LOGF(info, "    max dcaz:    %f", mMaxDCAz);
-  LOGF(info, "    net charges");
-  for (auto ch : mNetCharges) {
+  LOGF(info, "    min number tracks: %d", mMinNTracks);
+  LOGF(info, "    max number tracks: %d", mMaxNTracks);
+  LOGF(info, "    min fraction of PV contr. with TOF: %f", mMinRgtrwTOF);
+  LOGF(info, "    max dcaxy:         %f", mMaxDCAxy);
+  LOGF(info, "    max dcaz:          %f", mMaxDCAz);
+  LOGF(info, "    min dBC:           %d", mdBCMin);
+  LOGF(info, "    max dBC:           %d", mdBCMax);
+  LOGF(info, "    FIT vetoes (FV0A, FT0A, FT0C, FDDA, FDDC)");
+  LOGF(info, "      %d %d %d %d %d", mFITvetoes[0], mFITvetoes[1], mFITvetoes[2], mFITvetoes[3], mFITvetoes[4]);
+  LOGF(info, "    min NCl TPC:       %d", mMinNClTPC);
+  LOGF(info, "    max NCl TPC:       %d", mMaxNClTPC);
+  LOGF(info, "    min chi^{2} TPC    %f", mMinChi2NClTPC);
+  LOGF(info, "    max chi^{2} TPC    %f", mMaxChi2NClTPC);
+  LOGF(info, "    min track pT:      %f", mMinpt);
+  LOGF(info, "    max track pT:      %f", mMaxpt);
+  LOGF(info, "    min eta:           %f", mMineta);
+  LOGF(info, "    max eta:           %f", mMaxeta);
+  LOGF(info, "    min alpha:         %f", mMinAlpha);
+  LOGF(info, "    max alpha:         %f", mMaxAlpha);
+  LOGF(info, "    min system pT:     %f", mMinptsys);
+  LOGF(info, "    max system pT:     %f", mMaxptsys);
+  LOGF(info, "    nCombine:          %d", mNCombine);
+  LOGF(info, "    unlike charges");
+  for (auto ch : mUnlikeCharges) {
+    LOGF(info, "      %i", ch);
+  }
+  LOGF(info, "    like charges");
+  for (auto ch : mLikeCharges) {
     LOGF(info, "      %i", ch);
   }
   LOGF(info, "    PIDs");
   for (auto pid : mDGPIDs) {
-    LOGF(info, "      %f", pid);
+    LOGF(info, "      %d", pid);
   }
   PIDCuts().Print();
 }
 
 // -----------------------------------------------------------------------------
+// setter
+void DGAnaparHolder::SetNTracks(int min, int max)
+{
+  mMinNTracks = min;
+  mMaxNTracks = max;
+}
+
+void DGAnaparHolder::SetMinRgtrwTOF(float rgtrwTOF)
+{
+  mMinRgtrwTOF = rgtrwTOF;
+}
+
+void DGAnaparHolder::SetmaxDCA(float maxxy, float maxz)
+{
+  mMaxDCAxy = maxxy;
+  mMaxDCAz = maxz;
+}
+
+void DGAnaparHolder::SetdBC(int min, int max)
+{
+  mdBCMin = min;
+  mdBCMax = max;
+}
+
+void DGAnaparHolder::SetFITvetoes(std::vector<int> vetoes)
+{
+
+  if (vetoes.size() == 5) {
+    mFITvetoes = vetoes;
+  } else {
+    LOGF(info, "Wrong number of vetoes. Vetoes are not set!");
+  }
+}
+
+void DGAnaparHolder::SetITSOnlyTracks(bool itsOnly)
+{
+  mITSOnlyTracks = itsOnly;
+}
+
+void DGAnaparHolder::SetNClTPC(int min, int max)
+{
+  mMinNClTPC = min;
+  mMaxNClTPC = max;
+}
+
+void DGAnaparHolder::SetChi2NClTPC(float min, float max)
+{
+  mMinChi2NClTPC = min;
+  mMaxChi2NClTPC = max;
+}
+
+void DGAnaparHolder::Setpt(float min, float max)
+{
+  mMinpt = min;
+  mMaxpt = max;
+}
+
+void DGAnaparHolder::Seteta(float min, float max)
+{
+  mMineta = min;
+  mMaxeta = max;
+}
+
+void DGAnaparHolder::SetAlpha(float min, float max)
+{
+  mMinAlpha = min;
+  mMaxAlpha = max;
+}
+
+void DGAnaparHolder::Setptsys(float min, float max)
+{
+  mMinptsys = min;
+  mMaxptsys = max;
+}
+
+void DGAnaparHolder::SetnCombine(int nComb)
+{
+  mNCombine = nComb;
+}
+
+void DGAnaparHolder::SetnetCharges(std::vector<int> charges)
+{
+  mNetCharges = charges;
+}
+
+void DGAnaparHolder::SetunlikeCharges(std::vector<int> charges)
+{
+  mUnlikeCharges = charges;
+}
+
+void DGAnaparHolder::SetlikeCharges(std::vector<int> charges)
+{
+  mLikeCharges = charges;
+}
+
+void DGAnaparHolder::SetPIDs(std::vector<int> pids)
+{
+  mDGPIDs = pids;
+}
+
+// -----------------------------------------------------------------------------
+// getter
 DGPIDCuts DGAnaparHolder::PIDCuts()
 {
   return DGPIDCuts(mDGPIDCutValues);
@@ -145,8 +271,11 @@ DGPIDCuts DGAnaparHolder::PIDCuts()
 // -----------------------------------------------------------------------------
 void DGAnaparHolder::makeUniquePermutations()
 {
+  // reset
+  muniquePerms.clear();
+
   // all permutations of mNCombine elements
-  std::vector<std::vector<uint>> perms;
+  std::vector<std::vector<int>> perms;
   permutations(mNCombine, perms);
 
   // compute unique permutations
@@ -160,7 +289,7 @@ void DGAnaparHolder::makeUniquePermutations()
     cnt = -1;
     for (auto ind : perm) {
       cnt++;
-      perminfo[cnt] = static_cast<int>(mDGPIDs[ind]);
+      perminfo[cnt] = mDGPIDs[ind];
     }
     hashstr = "";
     for (auto tok : perminfo) {
@@ -183,9 +312,8 @@ void DGAnaparHolder::makeUniquePermutations()
 std::vector<int> DGAnaparHolder::uniquePermutations()
 {
   // create unique permutations if not done already
-  if (muniquePerms.size() == 0) {
+  if (muniquePerms.size() < mNCombine) {
     makeUniquePermutations();
-    LOGF(info, "Number of unique permutations: %i", muniquePerms.size() / mNCombine);
   }
 
   return muniquePerms;
@@ -193,9 +321,8 @@ std::vector<int> DGAnaparHolder::uniquePermutations()
 
 // -----------------------------------------------------------------------------
 // find all permutations of n0 elements
-void DGAnaparHolder::permutations(std::vector<uint>& ref, int n0, int np, std::vector<std::vector<uint>>& perms)
+void DGAnaparHolder::permutations(std::vector<int>& ref, int n0, int np, std::vector<std::vector<int>>& perms)
 {
-
   // create local reference
   auto ref2u = ref;
 
@@ -205,7 +332,7 @@ void DGAnaparHolder::permutations(std::vector<uint>& ref, int n0, int np, std::v
     // create a new permutation
     // copy first n0-np elements from ref
     // then rotate last np elements of ref
-    std::vector<uint> perm(n0, 0);
+    std::vector<int> perm(n0, 0);
     for (auto ii = 0; ii < n0 - np; ii++) {
       perm[ii] = ref2u[ii];
     }
@@ -233,7 +360,7 @@ void DGAnaparHolder::permutations(std::vector<uint>& ref, int n0, int np, std::v
 
 //-----------------------------------------------------------------------------
 // find all permutations of n0 elements
-int DGAnaparHolder::permutations(int n0, std::vector<std::vector<uint>>& perms)
+int DGAnaparHolder::permutations(int n0, std::vector<std::vector<int>>& perms)
 {
   // initialize with first trivial combination
   perms.clear();
@@ -241,7 +368,7 @@ int DGAnaparHolder::permutations(int n0, std::vector<std::vector<uint>>& perms)
     return 0;
   }
 
-  std::vector<uint> ref(n0, 0);
+  std::vector<int> ref(n0, 0);
   for (auto ii = 0; ii < n0; ii++) {
     ref[ii] = ii;
   }
@@ -286,7 +413,8 @@ DGPIDSelector::DGPIDSelector()
 
 DGPIDSelector::~DGPIDSelector()
 {
-  mIVMs.clear();
+  mUnlikeIVMs.clear();
+  mLikeIVMs.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -299,7 +427,8 @@ void DGPIDSelector::Print()
 void DGPIDSelector::init(DGAnaparHolder anaPars)
 {
   mAnaPars = anaPars;
-  mIVMs.clear();
+  mUnlikeIVMs.clear();
+  mLikeIVMs.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -323,8 +452,8 @@ int DGPIDSelector::pid2ind(int pid)
 
 // -----------------------------------------------------------------------------
 // find selections of np out of n0
-void DGPIDSelector::combinations(int n0, std::vector<uint>& pool, int np, std::vector<uint>& inds, int n,
-                                 std::vector<std::vector<uint>>& combs)
+void DGPIDSelector::combinations(int n0, std::vector<int>& pool, int np, std::vector<int>& inds, int n,
+                                 std::vector<std::vector<int>>& combs)
 {
   // loop over pool
   for (auto ii = 0; ii < n0 - n; ii++) {
@@ -335,7 +464,7 @@ void DGPIDSelector::combinations(int n0, std::vector<uint>& pool, int np, std::v
     // else get next inds
     if (np == 1) {
 
-      std::vector<uint> comb(n + 1, 0);
+      std::vector<int> comb(n + 1, 0);
       for (uint ii = 0; ii < inds.size(); ii++) {
         comb[ii] = inds[ii];
       }
@@ -344,7 +473,7 @@ void DGPIDSelector::combinations(int n0, std::vector<uint>& pool, int np, std::v
     } else {
 
       auto n0new = n0 - ii;
-      std::vector<uint> newpool(n0new, 0);
+      std::vector<int> newpool(n0new, 0);
       for (auto kk = 0; kk < n0new; kk++) {
         newpool[kk] = pool[kk + ii + 1];
       }
@@ -358,7 +487,7 @@ void DGPIDSelector::combinations(int n0, std::vector<uint>& pool, int np, std::v
 
 // -----------------------------------------------------------------------------
 // find all possible selections of np out of n0
-int DGPIDSelector::combinations(int n0, int np, std::vector<std::vector<uint>>& combs)
+int DGPIDSelector::combinations(int n0, int np, std::vector<std::vector<int>>& combs)
 {
   // initialisations
   combs.clear();
@@ -366,11 +495,11 @@ int DGPIDSelector::combinations(int n0, int np, std::vector<std::vector<uint>>& 
     return 0;
   }
 
-  std::vector<uint> pool(n0, 0);
+  std::vector<int> pool(n0, 0);
   for (auto ii = 0; ii < n0; ii++) {
     pool[ii] = ii;
   }
-  std::vector<uint> inds(np, 0);
+  std::vector<int> inds(np, 0);
 
   // iterate recursively
   combinations(n0, pool, np, inds, 0, combs);
@@ -379,35 +508,26 @@ int DGPIDSelector::combinations(int n0, int np, std::vector<std::vector<uint>>& 
 }
 
 // -----------------------------------------------------------------------------
-std::vector<std::vector<uint>> DGPIDSelector::combinations(int nPool)
+std::vector<std::vector<int>> DGPIDSelector::combinations(int nPool)
 {
   // get the unique permutations
   auto uniquePerms = mAnaPars.uniquePermutations();
   auto numUniquePerms = uniquePerms.size() / mAnaPars.nCombine();
 
   // all selections of nCombine elements from nPool elements
-  std::vector<std::vector<uint>> combs;
+  std::vector<std::vector<int>> combs;
   combinations(nPool, mAnaPars.nCombine(), combs);
 
   // permute the combinations
-  std::vector<std::vector<uint>> copes;
+  std::vector<std::vector<int>> copes;
   for (auto comb : combs) {
     for (auto ii = 0u; ii < numUniquePerms; ii++) {
-      std::vector<uint> cope(mAnaPars.nCombine(), 0);
+      std::vector<int> cope(mAnaPars.nCombine(), 0);
       for (auto jj = 0; jj < mAnaPars.nCombine(); jj++) {
         auto ind = ii * mAnaPars.nCombine() + jj;
         cope[uniquePerms[ind]] = comb[jj];
       }
       copes.push_back(cope);
-    }
-  }
-
-  // print copes
-  LOGF(debug, "copes");
-  for (auto cope : copes) {
-    LOGF(debug, "  cope");
-    for (auto ind : cope) {
-      LOGF(debug, "    %i", ind);
     }
   }
 

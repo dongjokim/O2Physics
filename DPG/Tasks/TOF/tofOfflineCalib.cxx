@@ -35,7 +35,7 @@ struct tofOfflineCalib {
   using Trks = soa::Join<aod::Tracks, aod::TracksExtra,
                          aod::TOFEvTime, aod::EvTimeTOFOnly, aod::TOFSignal, aod::pidEvTimeFlags,
                          aod::pidTPCFullEl, aod::pidTPCFullPi, aod::pidTPCFullKa, aod::pidTPCFullPr,
-                         aod::pidTOFFullEl, aod::pidTOFFullPi, aod::pidTOFFullKa, aod::pidTOFFullPr,
+                         aod::pidTOFFullEl, aod::pidTOFFullMu, aod::pidTOFFullPi, aod::pidTOFFullKa, aod::pidTOFFullPr,
                          aod::TrackSelection>;
   using Coll = soa::Join<aod::Collisions, aod::Mults, aod::EvSels, aod::FT0sCorrected>;
 
@@ -62,7 +62,7 @@ struct tofOfflineCalib {
   std::shared_ptr<TH1> hBadRefWithTRD;
 
   unsigned int randomSeed = 0;
-  void init(o2::framework::InitContext& initContext)
+  void init(o2::framework::InitContext&)
   {
     randomSeed = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     auto h = histos.add<TH1>("events", "Events", kTH1D, {{10, 0, 10, "Event selection"}});
@@ -148,19 +148,13 @@ struct tofOfflineCalib {
       deltaVsPHighChi2 = histos.add<TH2>(Form("Run%i/deltaVsPHighChi2", lastRun), "High Chi2", kTH2F, {pTAxis, doubleDeltaAxis});
     }
 
-    constexpr auto responseEl = ResponseImplementation<PID::Electron>();
-    constexpr auto responseMu = ResponseImplementation<PID::Muon>();
-    constexpr auto responsePi = ResponseImplementation<PID::Pion>();
-    constexpr auto responseKa = ResponseImplementation<PID::Kaon>();
-    constexpr auto responsePr = ResponseImplementation<PID::Proton>();
-
     int8_t lastTRDLayer = -1;
     for (auto& track1 : tracks) {
       if (!track1.hasTOF()) {
         continue;
       }
       // Selecting good reference
-      const float& texp1Pi = responsePi.GetExpectedSignal(track1);
+      const float& texp1Pi = track1.tofExpSignalPi(track1.tofSignal() - track1.tofEvTime());
       const float& delta1Pi = track1.tofSignal() - texp1Pi;
       if (track1.p() < pRefMin || track1.p() > pRefMax || track1.tofChi2() > maxTOFChi2 || fabs(delta1Pi) > deltatTh) {
         continue;
@@ -172,11 +166,11 @@ struct tofOfflineCalib {
         if (track1.globalIndex() == track2.globalIndex()) { // Skipping the same track
           continue;
         }
-        const float& texp2El = responseEl.GetExpectedSignal(track2);
-        const float& texp2Mu = responseMu.GetExpectedSignal(track2);
-        const float& texp2Pi = responsePi.GetExpectedSignal(track2);
-        const float& texp2Ka = responseKa.GetExpectedSignal(track2);
-        const float& texp2Pr = responsePr.GetExpectedSignal(track2);
+        const float& texp2El = track2.tofExpSignalEl(track2.tofSignal() - track2.tofEvTime());
+        const float& texp2Mu = track2.tofExpSignalMu(track2.tofSignal() - track2.tofEvTime());
+        const float& texp2Pi = track2.tofExpSignalPi(track2.tofSignal() - track2.tofEvTime());
+        const float& texp2Ka = track2.tofExpSignalKa(track2.tofSignal() - track2.tofEvTime());
+        const float& texp2Pr = track2.tofExpSignalPr(track2.tofSignal() - track2.tofEvTime());
         const float& delta2Pi = track2.tofSignal() - texp2Pi;
         if (track2.tofChi2() < maxTOFChi2) {
           deltaVsP->Fill(track2.p(), delta2Pi - delta1Pi);
@@ -214,7 +208,7 @@ struct tofOfflineCalib {
         tableRow(track2.collisionId(),
                  track2.p(),
                  track1.p() - track2.p(),
-                 track2.pt(),
+                 track2.pt() * track2.sign(),
                  track1.pt() - track2.pt(),
                  track2.eta(),
                  track1.eta() - track2.eta(),
@@ -226,6 +220,7 @@ struct tofOfflineCalib {
                  track2.tofSignal() - texp2Ka,
                  track2.tofSignal() - texp2Pr,
                  delta2Pi - delta1Pi,
+                 track1.sign(),
                  track2.length(),
                  track2.tofChi2(),
                  track2.tpcSignal(),

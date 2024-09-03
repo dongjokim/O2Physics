@@ -56,7 +56,7 @@ struct tracksWGTInBCs {
     }
   }
 
-  void processBarrel(BCs const& bcs, CCs const& collisions, TCs const& tracks, ATs const& ambTracks)
+  void processBarrel(BCs const& bcs, CCs const& /*collisions*/, TCs const& tracks, ATs const& ambTracks)
   {
     // run number
     int rnum = bcs.iteratorAt(0).runNumber();
@@ -139,7 +139,7 @@ struct tracksWGTInBCs {
   }
   PROCESS_SWITCH(tracksWGTInBCs, processBarrel, "Process barrel tracks", true);
 
-  void processForward(BCs& bcs, CCs& collisions, aod::FwdTracks& fwdTracks, aod::AmbiguousFwdTracks& ambFwdTracks)
+  void processForward(BCs& bcs, CCs& /*collisions*/, aod::FwdTracks& fwdTracks, aod::AmbiguousFwdTracks& ambFwdTracks)
   {
     // run number
     int rnum = bcs.iteratorAt(0).runNumber();
@@ -240,23 +240,24 @@ struct DGBCFilterRun3 {
 
   // histograms with cut statistics
   // bin:
-  //   0: All collisions
-  //   1: DG candidate
-  //   2: not clean FIT
-  //   3: number of FwdTracks > 0
-  //   4: not all global tracks are vtx tracks
-  //   5: not all vtx tracks are global tracks
-  //   6: fraction of tracks with TOF hit too low
-  //   7: number of vtx tracks out of range
-  //   8: has not good PID information
-  //   9: track pt out of range
-  //  10: track eta out of range
-  //  11: net charge out of range
-  //  12: IVM out of range
+  //   1: All collisions
+  //   2: DG candidate
+  //   3: FIT veto
+  //   4: number of FwdTracks > 0
+  //   5: not all global tracks are PV tracks
+  //   6: not all PV tracks are global tracks
+  //   7: ITS only PV tracks
+  //   8: fraction of tracks with TOF hit too low
+  //   9: number of PV tracks out of range
+  //  10: PV tracks without good PID information
+  //  11: PV track pt out of range
+  //  13: PV track eta out of range
+  //  14: net charge out of range
+  //  15: IVM out of range
   HistogramRegistry registry{
     "registry",
     {
-      {"aftercut", "#aftercut", {HistType::kTH1F, {{13, -0.5, 12.5}}}},
+      {"aftercut", "#aftercut", {HistType::kTH1F, {{14, -0.5, 13.5}}}},
     }};
 
   void init(InitContext&)
@@ -281,15 +282,15 @@ struct DGBCFilterRun3 {
   using FWs = aod::FwdTracks;
 
   void process(BCs const& bcs,
-               CCs const& collisions,
-               TCs& tracks,
+               CCs const& /*collisions*/,
+               TCs& /*tracks*/,
                // MFs& mfttracks,
                FWs& fwdtracks,
                TIBCs const& tibcs, FTIBCs const& ftibcs,
-               aod::Zdcs& zdcs,
-               aod::FT0s& ft0s,
-               aod::FV0As& fv0as,
-               aod::FDDs& fdds)
+               aod::Zdcs& /*zdcs*/,
+               aod::FT0s& /*ft0s*/,
+               aod::FV0As& /*fv0as*/,
+               aod::FDDs& /*fdds*/)
   {
 
     // Advance these pointers step-by-step

@@ -58,6 +58,7 @@ struct TreeWriterTPCTOF {
 
   /// Kaon
   Configurable<float> maxMomTPCOnlyKa{"maxMomTPCOnlyKa", 0.4, "Maximum momentum for TPC only cut kaon"};
+  Configurable<float> maxMomHardCutOnlyKa{"maxMomHardCutOnlyKa", 50, "Maximum TPC inner momentum for kaons"};
   Configurable<float> nSigmaTPCOnlyKa{"nSigmaTPCOnlyKa", 4., "number of sigma for TPC only cut kaon"};
   Configurable<float> nSigmaTPC_TPCTOF_Ka{"nSigmaTPC_TPCTOF_Ka", 4., "number of sigma for TPC cut for TPC and TOF combined kaon"};
   Configurable<float> nSigmaTOF_TPCTOF_Ka{"nSigmaTOF_TPCTOF_Ka", 3., "number of sigma for TOF cut for TPC and TOF combined kaon"};
@@ -102,7 +103,7 @@ struct TreeWriterTPCTOF {
 
   /// Event selection
   template <typename CollisionType, typename TrackType>
-  bool isEventSelected(const CollisionType& collision, const TrackType& tracks)
+  bool isEventSelected(const CollisionType& collision, const TrackType& /*tracks*/)
   {
     if (applyEvSel == 1) {
       if (!collision.sel7()) {
@@ -118,7 +119,7 @@ struct TreeWriterTPCTOF {
 
   /// Track selection
   template <typename CollisionType, typename TrackType>
-  bool isTrackSelected(const CollisionType& collision, const TrackType& track)
+  bool isTrackSelected(const CollisionType&, const TrackType& track)
   {
     if (!track.isGlobalTrack()) { // Skipping non global tracks
       return false;
@@ -146,7 +147,7 @@ struct TreeWriterTPCTOF {
     } else {
       TrackPID &= ~kProtonTrack;
     }
-    if ((trk.tpcInnerParam() < maxMomTPCOnlyKa && std::abs(trk.tpcNSigmaKa()) < nSigmaTPCOnlyKa) || (trk.tpcInnerParam() > maxMomTPCOnlyKa && std::abs(trk.tofNSigmaKa()) < nSigmaTOF_TPCTOF_Ka && std::abs(trk.tpcNSigmaKa()) < nSigmaTPC_TPCTOF_Ka)) {
+    if ((trk.tpcInnerParam() < maxMomHardCutOnlyKa) && ((trk.tpcInnerParam() < maxMomTPCOnlyKa && std::abs(trk.tpcNSigmaKa()) < nSigmaTPCOnlyKa) || (trk.tpcInnerParam() > maxMomTPCOnlyKa && std::abs(trk.tofNSigmaKa()) < nSigmaTOF_TPCTOF_Ka && std::abs(trk.tpcNSigmaKa()) < nSigmaTPC_TPCTOF_Ka))) {
       KaonTrack = true;
       TrackPID |= kKaonTrack;
     } else {
@@ -171,7 +172,7 @@ struct TreeWriterTPCTOF {
     }
   }
 
-  void init(o2::framework::InitContext& initContext)
+  void init(o2::framework::InitContext&)
   {
   }
   void process(Coll::iterator const& collision, Trks const& tracks, aod::BCsWithTimestamps const&)

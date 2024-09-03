@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include <TDatabasePDG.h> // FIXME
+
 #include "PWGCF/FemtoWorld/Core/FemtoWorldObjectSelection.h"
 #include "PWGCF/FemtoWorld/Core/FemtoWorldTrackSelection.h"
 #include "PWGCF/FemtoWorld/Core/FemtoWorldSelection.h"
@@ -386,7 +388,7 @@ void FemtoWorldPhiSelection::initPhi(HistogramRegistry* registry)
 }
 
 template <typename C, typename V, typename T>
-bool FemtoWorldPhiSelection::isSelectedMinimal(C const& col, V const& v0, T const& posTrack, T const& negTrack)
+bool FemtoWorldPhiSelection::isSelectedMinimal(C const& /*col*/, V const& v0, T const& posTrack, T const& negTrack)
 {
   const auto signPos = posTrack.sign();
   const auto signNeg = negTrack.sign();
@@ -398,7 +400,7 @@ bool FemtoWorldPhiSelection::isSelectedMinimal(C const& col, V const& v0, T cons
   const std::vector<float> decVtx = {v0.x(), v0.y(), v0.z()};
   const float tranRad = v0.v0radius();
   const float dcaDaughv0 = v0.dcaPhidaughters();
-  const float cpav0 = v0.v0cosPA(col.posX(), col.posY(), col.posZ());
+  const float cpav0 = v0.v0cosPA();
 
   const float invMassPhi = v0.mPhi();
   const float invMassAntiPhi = v0.mAntiPhi();
@@ -458,7 +460,7 @@ bool FemtoWorldPhiSelection::isSelectedMinimal(C const& col, V const& v0, T cons
 }
 
 template <typename C, typename V, typename T>
-void FemtoWorldPhiSelection::fillPhiQA(C const& col, V const& v0, T const& posTrack, T const& negTrack)
+void FemtoWorldPhiSelection::fillPhiQA(C const& /*col*/, V const& v0, T const& posTrack, T const& negTrack)
 {
   const auto signPos = posTrack.sign();
   const auto signNeg = negTrack.sign();
@@ -470,7 +472,7 @@ void FemtoWorldPhiSelection::fillPhiQA(C const& col, V const& v0, T const& posTr
   const std::vector<float> decVtx = {v0.x(), v0.y(), v0.z()};
   const float tranRad = v0.v0radius();
   const float dcaDaughv0 = v0.dcaPhidaughters();
-  const float cpav0 = v0.v0cosPA(col.posX(), col.posY(), col.posZ());
+  const float cpav0 = v0.v0cosPA();
 
   const float invMassPhi = v0.mPhi();
 
@@ -508,7 +510,7 @@ void FemtoWorldPhiSelection::fillPhiQA(C const& col, V const& v0, T const& posTr
 }
 
 template <typename C, typename V, typename T, typename P>
-void FemtoWorldPhiSelection::fillPhiQAMass(C const& col, V const& MassPhi, T const& posTrack, T const& negTrack, P const& ConfInvMassLowLimit, P const& ConfInvMassUpLimit)
+void FemtoWorldPhiSelection::fillPhiQAMass(C const& /*col*/, V const& MassPhi, T const& posTrack, T const& negTrack, P const& /*ConfInvMassLowLimit*/, P const& /*ConfInvMassUpLimit*/)
 {
   const auto signPos = posTrack.sign();
   const auto signNeg = negTrack.sign();
@@ -521,14 +523,14 @@ void FemtoWorldPhiSelection::fillPhiQAMass(C const& col, V const& MassPhi, T con
 
 /// the CosPA of Phi needs as argument the posXYZ of collisions vertex so we need to pass the collsion as well
 template <typename cutContainerType, typename C, typename T>
-std::array<cutContainerType, 5> FemtoWorldPhiSelection::getCutContainer(C const& col, T const& posTrack, T const& negTrack)
+std::array<cutContainerType, 5> FemtoWorldPhiSelection::getCutContainer(C const& /*col*/, T const& posTrack, T const& negTrack)
 {
   auto outputPosTrack = PosDaughTrack.getCutContainer<cutContainerType>(posTrack);
   auto outputNegTrack = NegDaughTrack.getCutContainer<cutContainerType>(negTrack);
   cutContainerType output = 0;
   size_t counter = 0;
 
-  // auto lambdaMassNominal = TDatabasePDG::Instance()->GetParticle(321)->Mass();
+  // auto lambdaMassNominal = TDatabasePDG::Instance()->GetParticle(321)->Mass(); // FIXME: Get from the common header
   // auto lambdaMassHypothesis = v0.mPhi();
   // auto antiPhiMassHypothesis = v0.mAntiPhi();
   // auto diffPhi = abs(lambdaMassNominal - lambdaMassHypothesis);
@@ -557,8 +559,8 @@ std::array<cutContainerType, 5> FemtoWorldPhiSelection::getCutContainer(C const&
   TLorentzVector part2Vec;
   Configurable<int> ConfPDGCodePartOne{"ConfPDGCodePartOne", 321, "Particle 1 - PDG code"};
   Configurable<int> ConfPDGCodePartTwo{"ConfPDGCodePartTwo", 321, "Particle 2 - PDG code"};
-  float mMassOne = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartOne)->Mass();
-  float mMassTwo = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartTwo)->Mass();
+  float mMassOne = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartOne)->Mass(); // FIXME: Get from the PDG service of the common header
+  float mMassTwo = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartTwo)->Mass(); // FIXME: Get from the PDG service of the common header
   part1Vec.SetPtEtaPhiM(posTrack.pt(), posTrack.eta(), posTrack.phi(), mMassOne);
   part2Vec.SetPtEtaPhiM(negTrack.pt(), negTrack.eta(), negTrack.phi(), mMassTwo);
 
@@ -568,7 +570,7 @@ std::array<cutContainerType, 5> FemtoWorldPhiSelection::getCutContainer(C const&
   const auto pT = sumVec.Pt();
   // const auto tranRad = v0.v0radius();
   // const auto dcaDaughv0 = v0.dcaPhidaughters();
-  // const auto cpav0 = v0.v0cosPA(col.posX(), col.posY(), col.posZ());
+  // const auto cpav0 = v0.v0cosPA();
   const std::vector<float> decVtx = {posTrack.x(), posTrack.y(), posTrack.z()};
 
   float observable = 0.;
@@ -612,15 +614,15 @@ std::array<cutContainerType, 5> FemtoWorldPhiSelection::getCutContainer(C const&
 }
 
 template <o2::aod::femtoworldparticle::ParticleType part, o2::aod::femtoworldparticle::ParticleType daugh, typename C, typename V, typename T>
-void FemtoWorldPhiSelection::fillQA(C const& col, V const& v0, T const& posTrack, T const& negTrack)
+void FemtoWorldPhiSelection::fillQA(C const& /*col*/, V const& /*v0*/, T const& posTrack, T const& negTrack)
 {
   if (mHistogramRegistry) {
     TLorentzVector part1Vec;
     TLorentzVector part2Vec;
     Configurable<int> ConfPDGCodePartOne{"ConfPDGCodePartOne", 321, "Particle 1 - PDG code"};
     Configurable<int> ConfPDGCodePartTwo{"ConfPDGCodePartTwo", 321, "Particle 2 - PDG code"};
-    float mMassOne = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartOne)->Mass();
-    float mMassTwo = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartTwo)->Mass();
+    float mMassOne = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartOne)->Mass(); // FIXME: Get from the PDG service of the common header
+    float mMassTwo = TDatabasePDG::Instance()->GetParticle(ConfPDGCodePartTwo)->Mass(); // FIXME: Get from the PDG service of the common header
     part1Vec.SetPtEtaPhiM(posTrack.pt(), posTrack.eta(), posTrack.phi(), mMassOne);
     part2Vec.SetPtEtaPhiM(negTrack.pt(), negTrack.eta(), negTrack.phi(), mMassTwo);
 
@@ -650,7 +652,7 @@ void FemtoWorldPhiSelection::fillQA(C const& col, V const& v0, T const& posTrack
 }
 
 template <o2::aod::femtoworldparticle::ParticleType part, o2::aod::femtoworldparticle::ParticleType daugh, typename C, typename V, typename T>
-void FemtoWorldPhiSelection::fillQAPhi(C const& col, V const& v0, T const& posTrack, T const& negTrack)
+void FemtoWorldPhiSelection::fillQAPhi(C const& /*col*/, V const& v0, T const& posTrack, T const& negTrack)
 {
   if (mHistogramRegistry) {
     mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hPtPhi"), v0.pt());
@@ -661,8 +663,8 @@ void FemtoWorldPhiSelection::fillQAPhi(C const& col, V const& v0, T const& posTr
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hDecayVtxX"), v0.x());
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hDecayVtxY"), v0.y());
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hDecayVtxZ"), v0.z());
-    // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hCPA"), v0.v0cosPA(col.posX(), col.posY(), col.posZ()));
-    // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hCPAvsPt"), v0.pt(), v0.v0cosPA(col.posX(), col.posY(), col.posZ()));
+    // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hCPA"), v0.v0cosPA());
+    // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hCPAvsPt"), v0.pt(), v0.v0cosPA());
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hInvMassPhi"), v0.mPhi());
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hInvMassAntiPhi"), v0.mAntiPhi());
     // mHistogramRegistry->fill(HIST(o2::aod::femtoworldparticle::ParticleTypeName[part]) + HIST("/hInvMassPhiAntiPhi"), v0.mPhi(), v0.mAntiPhi());

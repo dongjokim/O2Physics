@@ -20,7 +20,6 @@
 #include "TH2.h"
 #include "TProfile.h"
 
-using namespace std;
 class multGlauberNBDFitter : public TNamed
 {
 
@@ -76,7 +75,7 @@ class multGlauberNBDFitter : public TNamed
   Double_t ContinuousNBD(Double_t n, Double_t mu, Double_t k);
 
   //For estimating Npart, Ncoll in multiplicity bins
-  void CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCollProf);
+  void CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCollProf, TH2F* lNPart2DPlot, TH2F* lNColl2DPlot, TH1F* hPercentileMap);
 
   //void    Print(Option_t *option="") const;
 
@@ -108,6 +107,7 @@ class multGlauberNBDFitter : public TNamed
 
   //The actual output: mu, k, f, norm
   Double_t fMu;
+  Double_t fdMu; // variable mu option
   Double_t fk;
   Double_t ff;
   Double_t fnorm;

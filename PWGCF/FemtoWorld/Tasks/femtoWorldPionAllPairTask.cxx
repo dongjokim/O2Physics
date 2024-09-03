@@ -47,6 +47,9 @@ using FemtoWorldParticleMerged = FemtoWorldParticlesMerged::iterator;
 } // namespace o2::aod
 
 struct FemtoWorldIdenticalPionPair {
+  SliceCache cache;
+  Preslice<aod::FemtoWorldParticlesMerged> perCol = aod::femtoworldparticle::femtoWorldCollisionId;
+
   // Configurables for cuts
   // First particle
   Configurable<float> cfgPtLowPart1{"cfgPtLowPart1", 0.14, "Lower limit for Pt for the first particle"};
@@ -99,7 +102,7 @@ struct FemtoWorldIdenticalPionPair {
   // Configurable<std::vector<float>> CfgCentBins{"CfgCentBins",{5.0f,10.0f,20.0f,30.0f,40.0f,50.0f},"Centrality Bins"};
 
   ColumnBinningPolicy<aod::collision::PosZ, aod::femtoworldcollision::MultV0M> colBinning{{CfgVtxBins, CfgMultBins}, true};
-  ColumnBinningPolicy<aod::collision::PosZ, aod::cent::CentRun2V0M> colBinning2{{CfgVtxBins, CfgCentBinsMixing}, true};
+  ColumnBinningPolicy<aod::collision::PosZ, aod::femtoworldcollision::RunCentrality> colBinning2{{CfgVtxBins, CfgCentBinsMixing}, true};
 
   ConfigurableAxis CfgkstarBins{"CfgkstarBins", {1500, 0., 6.}, "binning kstar"};
   ConfigurableAxis CfgkTBins{"CfgkTBins", {150, 0., 9.}, "binning kT"};
@@ -163,7 +166,7 @@ struct FemtoWorldIdenticalPionPair {
   void processSameEvent(o2::aod::FemtoWorldCollision& col, o2::aod::FemtoWorldParticlesMerged& parts)
   {
 
-    auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex());
+    auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex(), cache);
 
     // auto groupPartsOne=groupParts.sliceByCached(aod::femtoworldparticle::sign,cfgSignPartOne);
     // auto groupPartsTwo=groupParts.sliceByCached(aod::femtoworldparticle::sign,cfgSignPartTwo);
@@ -171,7 +174,7 @@ struct FemtoWorldIdenticalPionPair {
     const auto& magFieldTesla = col.magField();
     const int multCol = col.multV0M();
     eventHisto.fillQA(col);
-    MixQaRegistry.fill(HIST("MixingQA/hSECollisionBins"), colBinning2.getBin({col.posZ(), col.centRun2V0M()}));
+    MixQaRegistry.fill(HIST("MixingQA/hSECollisionBins"), colBinning2.getBin({col.posZ(), col.runCent()}));
 
     /// Histogramming same event
     for (auto& part : groupPartsOne) {
@@ -241,7 +244,7 @@ struct FemtoWorldIdenticalPionPair {
 
       float kstar = FemtoWorldMath::getkstar(p1, mMassOne, p2, mMassTwo);
       // float kT=FemtoWorldMath::getkT(p1, mMassOne, p2, mMassTwo)
-      float v0mCent = col.centRun2V0M();
+      float v0mCent = col.runCent();
       SameEvCorrWithCent.fill<float>(kstar, v0mCent);
     }
   }
@@ -253,10 +256,10 @@ struct FemtoWorldIdenticalPionPair {
   {
     for (auto& [collision1, collision2] : soa::selfCombinations(colBinning2, 5, -1, cols, cols)) {
 
-      MixQaRegistry.fill(HIST("MixingQA/hMECollisionBins"), colBinning2.getBin({collision1.posZ(), collision1.centRun2V0M()}));
+      MixQaRegistry.fill(HIST("MixingQA/hMECollisionBins"), colBinning2.getBin({collision1.posZ(), collision1.runCent()}));
 
-      auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision1.globalIndex());
-      auto groupPartsTwo = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex());
+      auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision1.globalIndex(), cache);
+      auto groupPartsTwo = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex(), cache);
 
       const auto& magFieldTesla1 = collision1.magField();
       const auto& magFieldTesla2 = collision2.magField();
@@ -305,7 +308,7 @@ struct FemtoWorldIdenticalPionPair {
         mixedEventCont.setPair(p1, p2, collision1.multV0M());
 
         float kstar = FemtoWorldMath::getkstar(p1, mMassOne, p2, mMassTwo);
-        float v0mCent = collision1.centRun2V0M();
+        float v0mCent = collision1.runCent();
         // float kT=FemtoWorldMath::getkT(p1, mMassOne, p2, mMassTwo)
         MixedEvCorrWithCent.fill<float>(kstar, v0mCent);
       }

@@ -15,9 +15,6 @@
 /// \since 20-10-2020
 ///
 
-#ifndef COMMON_CORE_TRACKSELECTIONDEFAULTS_H_
-#define COMMON_CORE_TRACKSELECTIONDEFAULTS_H_
-
 #include "Framework/DataTypes.h"
 #include "Common/Core/TrackSelection.h"
 #include "TrackSelectionDefaults.h"
@@ -43,7 +40,7 @@ TrackSelection getGlobalTrackSelection()
 }
 
 // Default track selection requiring a particular Run 3 ITS matching
-TrackSelection getGlobalTrackSelectionRun3ITSMatch(int matching)
+TrackSelection getGlobalTrackSelectionRun3ITSMatch(int matching, int passFlag)
 {
   TrackSelection selectedTracks = getGlobalTrackSelection();
   selectedTracks.SetTrackType(o2::aod::track::TrackTypeEnum::Track); // Requiring that this is a Run 3 track
@@ -61,8 +58,21 @@ TrackSelection getGlobalTrackSelectionRun3ITSMatch(int matching)
     case TrackSelection::GlobalTrackRun3ITSMatching::Run3ITSall7Layers:
       selectedTracks.SetRequireHitsInITSLayers(7, {0, 1, 2, 3, 4, 5, 6});
       break;
+    case TrackSelection::GlobalTrackRun3ITSMatching::Run3ITSibFirst:
+      selectedTracks.SetRequireHitsInITSLayers(1, {0});
+      break;
     default:
       LOG(fatal) << "getGlobalTrackSelectionRun3ITSMatch with undefined ITS matching";
+      break;
+  }
+  switch (passFlag) {
+    case TrackSelection::GlobalTrackRun3DCAxyCut::Default:
+      break;
+    case TrackSelection::GlobalTrackRun3DCAxyCut::ppPass3:                            // Pass3 pp parameters
+      selectedTracks.SetMaxDcaXYPtDep([](float pt) { return 0.004f + 0.013f / pt; }); // Tuned on the LHC22f anchored MC LHC23d1d on primary pions. 7 Sigmas of the resolution
+      break;
+    default:
+      LOG(fatal) << "getGlobalTrackSelectionRun3ITSMatch with undefined DCA cut";
       break;
   }
   return selectedTracks;
@@ -107,4 +117,15 @@ TrackSelection getGlobalTrackSelectionRun3HF()
   return selectedTracks;
 }
 
-#endif
+// Reduced default track selection for jet validation based on hybrid cuts for converted (based on ESD's from run 2) A02D's
+TrackSelection getJEGlobalTrackSelectionRun2()
+{
+  TrackSelection selectedTracks = getGlobalTrackSelection();
+  selectedTracks.SetPtRange(0.15f, 1e15f);
+  selectedTracks.SetRequireGoldenChi2(false);
+  selectedTracks.SetMaxDcaXYPtDep([](float /*pt*/) { return 1e+10; });
+  selectedTracks.SetEtaRange(-0.9f, 0.9f);
+  selectedTracks.SetMaxDcaXY(2.4f);
+  selectedTracks.SetMaxDcaZ(3.2f);
+  return selectedTracks;
+}

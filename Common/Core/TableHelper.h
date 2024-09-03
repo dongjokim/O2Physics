@@ -23,21 +23,26 @@
 #include "Framework/InitContext.h"
 #include "Framework/RunningWorkflowInfo.h"
 
+/// Function to print the table required in the full workflow
+/// @param initContext initContext of the init function
+void printTablesInWorkflow(o2::framework::InitContext& initContext);
+
 /// Function to check if a table is required in a workflow
 /// @param initContext initContext of the init function
 /// @param table name of the table to check for
-bool isTableRequiredInWorkflow(o2::framework::InitContext& initContext, const std::string& table)
-{
-  auto& workflows = initContext.services().get<o2::framework::RunningWorkflowInfo const>();
-  for (auto const& device : workflows.devices) {
-    for (auto const& input : device.inputs) {
-      if (input.matcher.binding == table) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
+bool isTableRequiredInWorkflow(o2::framework::InitContext& initContext, const std::string& table);
+
+/// Function to enable or disable a configurable flag, depending on the fact that a table is needed or not
+/// @param initContext initContext of the init function
+/// @param table name of the table to check for
+/// @param flag bool value of flag to set, if the given value is true it will be kept, disregarding the table usage in the workflow.
+void enableFlagIfTableRequired(o2::framework::InitContext& initContext, const std::string& table, bool& flag);
+
+/// Function to enable or disable a configurable flag, depending on the fact that a table is needed or not
+/// @param initContext initContext of the init function
+/// @param table name of the table to check for
+/// @param flag int value of flag to set, only if initially set to -1. Initial values of 0 or 1 will be kept disregarding the table usage in the workflow.
+void enableFlagIfTableRequired(o2::framework::InitContext& initContext, const std::string& table, int& flag);
 
 /// Function to enable or disable a configurable flag, depending on the fact that a table is needed or not
 /// @param initContext initContext of the init function
@@ -46,17 +51,48 @@ bool isTableRequiredInWorkflow(o2::framework::InitContext& initContext, const st
 template <typename FlagType>
 void enableFlagIfTableRequired(o2::framework::InitContext& initContext, const std::string& table, FlagType& flag)
 {
-  if (isTableRequiredInWorkflow(initContext, table)) {
-    if (flag < 0) {
-      flag.value = 1;
-      LOG(info) << "Auto-enabling table: " + table;
-    } else if (flag > 0) {
-      flag.value = 1;
-      LOG(info) << "Table enabled: " + table;
-    } else {
-      LOG(info) << "Table disabled: " + table;
+  enableFlagIfTableRequired(initContext, table, flag.value);
+}
+
+/// Function to check for a specific configurable from another task in the current workflow and fetch its value. Useful for tasks that need to know the value of a configurable in another task.
+/// @param initContext initContext of the init function
+/// @param taskName name of the task to check for
+/// @param optName name of the option to check for
+/// @param value value of the option to set
+/// @param verbose if true, print debug messages
+template <typename ValueType>
+bool getTaskOptionValue(o2::framework::InitContext& initContext, const std::string& taskName, const std::string& optName, ValueType& value, const bool verbose = true)
+{
+  if (verbose) {
+    LOG(info) << "Checking for option '" << optName << "' in task '" << taskName << "'";
+  }
+  auto& workflows = initContext.services().get<o2::framework::RunningWorkflowInfo const>();
+  int deviceCounter = 0;
+  bool found = false;
+  for (auto const& device : workflows.devices) {
+    if (verbose) {
+      LOG(info) << " Device " << deviceCounter++ << " " << device.name;
+    }
+    if (device.name == taskName) { // Found the mother task
+      int optionCounter = 0;
+      for (auto const& option : device.options) {
+        if (verbose) {
+          LOG(info) << "  Option " << optionCounter++ << " " << option.name << " = '" << option.defaultValue.asString() << "'";
+        }
+        if (option.name == optName) {
+          value = option.defaultValue.get<ValueType>();
+          if (verbose) {
+            LOG(info) << "   Found option '" << optName << "' with value '" << value << "'";
+            found = true;
+          } else {
+            return true;
+          }
+        }
+      }
+      return found;
     }
   }
+  return false;
 }
 
 #endif // COMMON_CORE_TABLEHELPER_H_

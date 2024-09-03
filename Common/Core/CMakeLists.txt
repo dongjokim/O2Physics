@@ -10,24 +10,25 @@
 # or submit itself to any jurisdiction.
 
 o2physics_add_library(AnalysisCore
-               SOURCES TrackSelection.cxx
-                       OrbitRange.cxx
-                       PID/ParamBase.cxx
-                       TrackSelectionDefaults.cxx
-               PUBLIC_LINK_LIBRARIES O2::Framework ROOT::EG O2::CCDB ROOT::Physics)
+        SOURCES TrackSelection.cxx
+        OrbitRange.cxx
+        PID/ParamBase.cxx
+        CollisionAssociation.cxx
+        TrackSelectionDefaults.cxx
+        EventPlaneHelper.cxx
+        TableHelper.cxx
+        MetadataHelper.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2::DataFormatsParameters ROOT::EG O2::CCDB ROOT::Physics O2::FT0Base O2::FV0Base)
 
 o2physics_target_root_dictionary(AnalysisCore
-              HEADERS   TrackSelection.h
-                        TrackSelectionDefaults.h
-                        OrbitRange.h
-                        PID/ParamBase.h
-                        PID/DetectorResponse.h
-                        PID/PIDTOF.h
-                        PID/TOFReso.h
-                        PID/TPCPIDResponse.h
-              LINKDEF AnalysisCoreLinkDef.h)
-
-o2physics_add_executable(merger
-              COMPONENT_NAME aod
-              SOURCES aodMerger.cxx
-              PUBLIC_LINK_LIBRARIES ROOT::Hist ROOT::Core ROOT::Net)
+        HEADERS TrackSelection.h
+        TrackSelectionDefaults.h
+        OrbitRange.h
+        TableHelper.h
+        MetadataHelper.h
+        EventPlaneHelper.h
+        PID/ParamBase.h
+        PID/DetectorResponse.h
+        PID/PIDTOF.h
+        PID/TPCPIDResponse.h
+        LINKDEF AnalysisCoreLinkDef.h)

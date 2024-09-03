@@ -11,7 +11,7 @@
 
 #include "EventSelectionParams.h"
 
-namespace evsel
+namespace o2::aod::evsel
 {
 const char* selectionLabels[kNsel] = {
   "kIsBBV0A",
@@ -44,11 +44,27 @@ const char* selectionLabels[kNsel] = {
   "kNoV0C012vsTklBG",
   "kNoInconsistentVtx",
   "kNoPileupInMultBins",
-  "kNoPilupMV",
+  "kNoPileupMV",
   "kNoPileupTPC",
   "kIsTriggerTVX",
-  "kIsINT1"};
-}
+  "kIsINT1",
+  "kNoITSROFrameBorder",
+  "kNoTimeFrameBorder",
+  "kNoSameBunchPileup",
+  "kIsGoodZvtxFT0vsPV",
+  "kIsVertexITSTPC",
+  "kIsVertexTOFmatched",
+  "kIsVertexTRDmatched",
+  "kNoHighOccupancyAgressive",
+  "kNoHighOccupancyStrict",
+  "kNoHighOccupancyMedium",
+  "kNoHighOccupancyRelaxed",
+  "kNoHighOccupancyGentle",
+  "kNoCollInTimeRangeStandard",
+  "kNoCollInTimeRangeNarrow"};
+} // namespace o2::aod::evsel
+
+using namespace o2::aod::evsel;
 
 EventSelectionParams::EventSelectionParams(int system, int run)
 {

@@ -10,62 +10,78 @@
 # or submit itself to any jurisdiction.
 
 add_subdirectory(PID)
+add_subdirectory(V0Cascades)
 
 o2physics_add_dpl_workflow(qa-trackselection
-                           SOURCES qaTrackSelection.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES qaTrackSelection.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-event-track
-                           SOURCES qaEventTrack.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::ReconstructionDataFormats
-                           COMPONENT_NAME Analysis)
+    SOURCES qaEventTrack.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2::ReconstructionDataFormats
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-event-track-lite
-                           SOURCES qaEventTrackLite.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::ReconstructionDataFormats
-                           COMPONENT_NAME Analysis)
+    SOURCES qaEventTrackLite.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2::ReconstructionDataFormats
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-event-track-lite-producer
-                           SOURCES qaEventTrackLiteProducer.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::ReconstructionDataFormats
-                           COMPONENT_NAME Analysis)
+    SOURCES qaEventTrackLiteProducer.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2::ReconstructionDataFormats
+    COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(qa-fakehits
+    SOURCES qaFakeHits.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-efficiency
-                           SOURCES qaEfficiency.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES qaEfficiency.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(qa-dca-mc
+    SOURCES qaDcaMC.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(qa-sign-charge-mc
+    SOURCES qaSignChargeMC.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2::DetectorsVertexing
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-match-eff
-                           SOURCES qaMatchEff.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES qaMatchEff.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-impact-parameter
-                           SOURCES qaImpPar.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework
-                                                 O2Physics::AnalysisCore
-                                                 O2::ReconstructionDataFormats
-                                                 O2::DetectorsCommonDataFormats
-                                                 O2::DetectorsVertexing
-                           COMPONENT_NAME Analysis)
-
-o2physics_add_dpl_workflow(qa-k0s-tracking-efficiency
-                           SOURCES qaK0sTrackingEfficiency.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
-
-o2physics_add_dpl_workflow(perf-k0s-resolution
-                           SOURCES perfK0sResolution.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES qaImpPar.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    O2::ReconstructionDataFormats
+    O2::DetectorsCommonDataFormats
+    O2::DetectorsVertexing
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(monitorfilterbit
-                           SOURCES MonitorFilterBit.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES MonitorFilterBit.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(qa-prim-vtx-vs-time
-                           SOURCES qaPrimVtxVsTime.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
-                           COMPONENT_NAME Analysis)
+    SOURCES qaPrimVtxVsTime.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(qa-tracksplitting
+    SOURCES qaTrackSplitting.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+    COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(tag-and-probe-dmesons
+    SOURCES tagAndProbeDmesons.cxx
+    PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2::DetectorsVertexing O2Physics::MLCore
+    COMPONENT_NAME Analysis)
+

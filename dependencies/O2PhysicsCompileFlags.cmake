@@ -11,7 +11,53 @@
 
 include_guard()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -Werror=unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
+# Enabled warnings supported by Clang and GCC, not treated as errors
+set(O2PHYSICS_WARNINGS_COMMON_NO_ERROR "sign-compare")
+
+# Enabled warnings supported by Clang only, not treated as errors
+set(O2PHYSICS_WARNINGS_CLANG_NO_ERROR "")
+
+# Enabled warnings supported by GCC only, not treated as errors
+set(O2PHYSICS_WARNINGS_GCC_NO_ERROR "")
+
+# Function to build a list of warning flags from their names
+function(o2_build_warning_flags)
+  cmake_parse_arguments(PARSE_ARGV 0 A "" "PREFIX;OUTPUTVARNAME" "WARNINGS")
+  if(A_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "Unexpected unparsed arguments: ${A_UNPARSED_ARGUMENTS}")
+  endif()
+  list(TRANSFORM A_WARNINGS STRIP)
+  list(TRANSFORM A_WARNINGS PREPEND ${A_PREFIX})
+  string(JOIN " " OUTPUT ${A_WARNINGS})
+  set(${A_OUTPUTVARNAME} ${OUTPUT} PARENT_SCOPE)
+endfunction()
+
+message(STATUS "O2PHYSICS_WARNINGS_AS_ERRORS: ${O2PHYSICS_WARNINGS_AS_ERRORS}")
+
+# Treat warnings as errors.
+if(O2PHYSICS_WARNINGS_AS_ERRORS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+  # Set warning flags for all platforms.
+  o2_build_warning_flags(PREFIX "-Wno-error="
+                         OUTPUTVARNAME O2PHYSICS_CXX_WARNINGS_COMMON_NO_ERROR
+                         WARNINGS ${O2PHYSICS_WARNINGS_COMMON_NO_ERROR})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${O2PHYSICS_CXX_WARNINGS_COMMON_NO_ERROR}")
+  if(APPLE)
+    # Set warning flags for macOS only.
+    o2_build_warning_flags(PREFIX "-Wno-error="
+                           OUTPUTVARNAME O2PHYSICS_CXX_WARNINGS_APPLE_NO_ERROR
+                           WARNINGS ${O2PHYSICS_WARNINGS_CLANG_NO_ERROR})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${O2PHYSICS_CXX_WARNINGS_APPLE_NO_ERROR}")
+  elseif(UNIX)
+    # Set warning flags for Linux only.
+    o2_build_warning_flags(PREFIX "-Wno-error="
+                           OUTPUTVARNAME O2PHYSICS_CXX_WARNINGS_UNIX_NO_ERROR
+                           WARNINGS ${O2PHYSICS_WARNINGS_GCC_NO_ERROR})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${O2PHYSICS_CXX_WARNINGS_UNIX_NO_ERROR}")
+  endif()
+endif()
 
 IF (ENABLE_TIMETRACE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
@@ -53,7 +99,6 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING "Debug mode buil
 set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0" CACHE STRING "Debug mode build flags" FORCE)
 
 if(APPLE)
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,error") # avoid undefined in our libs
 elseif(UNIX)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined") # avoid undefined in our libs
 endif()

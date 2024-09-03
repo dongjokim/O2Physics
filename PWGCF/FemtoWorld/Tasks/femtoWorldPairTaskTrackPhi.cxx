@@ -50,6 +50,9 @@ static const std::vector<float> kNsigma = {3.5f, 3.f, 2.5f};
 } // namespace
 
 struct femtoWorldPairTaskTrackPhi {
+  SliceCache cache;
+  Preslice<aod::FemtoWorldParticles> perCol = aod::femtoworldparticle::femtoWorldCollisionId;
+
   /// Particle selection part
   Configurable<int> ConfTrackChoice{"ConfTrackChoice", 0, "Type of particle (track1): {0:Proton, 1:Pion, 2:Kaon}"};
   Configurable<float> ConfNsigmaCombinedKaon{"ConfNsigmaCombinedKaon", 3.0, "TPC and TOF Kaon Sigma (combined) for momentum > 0.4"};
@@ -255,12 +258,12 @@ struct femtoWorldPairTaskTrackPhi {
   /// This function processes the same event and takes care of all the histogramming
   /// \todo the trivial loops over the tracks should be factored out since they will be common to all combinations of T-T, T-Phi, Phi-Phi, ...
   void processSameEvent(o2::aod::FemtoWorldCollision& col,
-                        o2::aod::FemtoWorldParticles& parts)
+                        o2::aod::FemtoWorldParticles&)
   {
     // const auto& magFieldTesla = col.magField();
-    auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex());
-    auto groupPartsTwo = partsTwo->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex());
-    auto groupPartsThree = partsThree->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex());
+    auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex(), cache);
+    auto groupPartsTwo = partsTwo->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex(), cache);
+    auto groupPartsThree = partsThree->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, col.globalIndex(), cache);
 
     const int multCol = col.multV0M();
     eventHisto.fillQA(col);
@@ -306,15 +309,15 @@ struct femtoWorldPairTaskTrackPhi {
   /// This function processes the mixed event
   /// \todo the trivial loops over the collisions and tracks should be factored out since they will be common to all combinations of T-T, T-Phi, Phi-Phi, ...
   void processMixedEvent(o2::aod::FemtoWorldCollisions& cols,
-                         o2::aod::FemtoWorldParticles& parts)
+                         o2::aod::FemtoWorldParticles&)
   {
     ColumnBinningPolicy<aod::collision::PosZ, aod::femtoworldcollision::MultV0M> colBinning{{CfgVtxBins, CfgMultBins}, true};
 
     for (auto& [collision1, collision2] : soa::selfCombinations(colBinning, ConfNEventsMix, -1, cols, cols)) {
 
-      auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision1.globalIndex());
-      auto groupPartsTwo = partsTwo->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex());
-      auto groupPartsThree = partsThree->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex());
+      auto groupPartsOne = partsOne->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision1.globalIndex(), cache);
+      auto groupPartsTwo = partsTwo->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex(), cache);
+      auto groupPartsThree = partsThree->sliceByCached(aod::femtoworldparticle::femtoWorldCollisionId, collision2.globalIndex(), cache);
 
       const auto& magFieldTesla1 = collision1.magField();
       const auto& magFieldTesla2 = collision2.magField();

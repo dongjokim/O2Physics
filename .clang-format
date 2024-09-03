@@ -24,6 +24,7 @@ ExperimentalAutoDetectBinPacking: false
 IndentCaseLabels: true
 IndentFunctionDeclarationAfterType: true
 IndentWidth:     2
+InsertNewlineAtEOF: true
 # It is broken on windows. Breaks all #include "header.h"
 ---
 Language:        Cpp
@@ -54,3 +55,7 @@ UseTab:          Never
 # Do not format protobuf files
 Language: Proto
 DisableFormat: true
+---
+Language: Json
+# O2 dumps JSON files with 4-space indents.
+IndentWidth: 4

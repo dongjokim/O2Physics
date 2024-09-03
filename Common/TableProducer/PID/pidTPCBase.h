@@ -21,18 +21,40 @@
 #include "Common/DataModel/Multiplicity.h"
 #include "Common/DataModel/PIDResponse.h"
 
-using namespace o2;
-using namespace o2::track;
-using namespace o2::framework;
-using namespace o2::framework::expressions;
-
 namespace o2::aod
 {
 
 DECLARE_SOA_TABLE(PIDMults, "AOD", "PIDMults", //! TPC auxiliary table for the PID
+                  o2::soa::Marker<1>,
                   mult::MultTPC);
 using PIDMult = PIDMults::iterator;
 
 } // namespace o2::aod
+
+int getPIDIndex(const int pdgCode) // Get O2 PID index corresponding to MC PDG code
+{
+  switch (abs(pdgCode)) {
+    case 11:
+      return o2::track::PID::Electron;
+    case 13:
+      return o2::track::PID::Muon;
+    case 211:
+      return o2::track::PID::Pion;
+    case 321:
+      return o2::track::PID::Kaon;
+    case 2212:
+      return o2::track::PID::Proton;
+    case 1000010020:
+      return o2::track::PID::Deuteron;
+    case 1000010030:
+      return o2::track::PID::Triton;
+    case 1000020030:
+      return o2::track::PID::Helium3;
+    case 1000020040:
+      return o2::track::PID::Alpha;
+    default: // treat as pion if not any of the above
+      return o2::track::PID::Pion;
+  }
+}
 
 #endif // COMMON_TABLEPRODUCER_PID_PIDTPCBASE_H_

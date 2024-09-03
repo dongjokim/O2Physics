@@ -34,6 +34,7 @@ using namespace o2::framework::expressions;
 using namespace o2::track;
 
 struct PidMultiplicity {
+  SliceCache cache;
   Produces<aod::PIDMults> mult;
 
   bool enableTable = false;
@@ -52,24 +53,24 @@ struct PidMultiplicity {
 
   using TrksIU = soa::Join<aod::TracksIU, aod::TracksExtra>;
   Partition<TrksIU> tracksWithTPCIU = (aod::track::tpcNClsFindable > (uint8_t)0);
-  void processIU(aod::Collision const& collision, TrksIU const& tracksExtra)
+  void processIU(aod::Collision const& collision, TrksIU const&)
   {
     if (!enableTable) {
       return;
     }
-    auto tracksGrouped = tracksWithTPCIU->sliceByCached(aod::track::collisionId, collision.globalIndex());
+    auto tracksGrouped = tracksWithTPCIU->sliceByCached(aod::track::collisionId, collision.globalIndex(), cache);
     mult(tracksGrouped.size());
   }
   PROCESS_SWITCH(PidMultiplicity, processIU, "Process with IU tracks, faster but works on Run3 only", false);
 
   using Trks = soa::Join<aod::Tracks, aod::TracksExtra>;
   Partition<Trks> tracksWithTPC = (aod::track::tpcNClsFindable > (uint8_t)0);
-  void processStandard(aod::Collision const& collision, Trks const& tracksExtra)
+  void processStandard(aod::Collision const& collision, Trks const&)
   {
     if (!enableTable) {
       return;
     }
-    auto tracksGrouped = tracksWithTPC->sliceByCached(aod::track::collisionId, collision.globalIndex());
+    auto tracksGrouped = tracksWithTPC->sliceByCached(aod::track::collisionId, collision.globalIndex(), cache);
     mult(tracksGrouped.size());
   }
   PROCESS_SWITCH(PidMultiplicity, processStandard, "Process with tracks, needs propagated tracks", true);

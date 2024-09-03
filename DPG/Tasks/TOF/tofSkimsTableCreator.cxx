@@ -34,10 +34,8 @@ using namespace o2::track;
 struct tofSkimsTableCreator {
   using Trks = soa::Join<aod::Tracks, aod::TracksExtra,
                          aod::TOFEvTime, aod::EvTimeTOFOnly, aod::TOFSignal, aod::pidEvTimeFlags,
-                         aod::pidTPCFullEl, aod::pidTPCFullPi, aod::pidTPCFullKa, aod::pidTPCFullPr,
-                         aod::pidTOFFullEl, aod::pidTOFFullPi, aod::pidTOFFullKa, aod::pidTOFFullPr,
                          aod::TrackSelection>;
-  using Coll = soa::Join<aod::Collisions, aod::Mults, aod::EvSels, aod::FT0sCorrected>;
+  using Coll = soa::Join<aod::Collisions, aod::EvSels, aod::FT0sCorrected>;
 
   // Tables to be produced
   Produces<o2::aod::SkimmedTOFColl> tableColRow;
@@ -50,7 +48,7 @@ struct tofSkimsTableCreator {
   Configurable<float> fractionOfEvents{"fractionOfEvents", 0.1, "Fractions of events to keep"};
 
   unsigned int randomSeed = 0;
-  void init(o2::framework::InitContext& initContext)
+  void init(o2::framework::InitContext&)
   {
     randomSeed = static_cast<unsigned int>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     switch (applyEvSel.value) {
@@ -122,8 +120,7 @@ struct tofSkimsTableCreator {
       break;
     }
 
-    tableColRow(collision.globalIndex(),
-                evTimeTOF,
+    tableColRow(evTimeTOF,
                 evTimeTOFErr,
                 evTimeTOFMult,
                 evTimeT0A,
@@ -149,9 +146,9 @@ struct tofSkimsTableCreator {
           }
         }
       }
-      tableRow(trk.collisionId(),
+      tableRow(tableColRow.lastIndex(),
                trk.p(),
-               trk.pt(),
+               trk.pt() * trk.sign(),
                trk.eta(),
                trk.phi(),
                trk.pidForTracking(),

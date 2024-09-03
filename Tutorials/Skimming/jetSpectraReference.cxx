@@ -38,28 +38,16 @@ struct JetSpectraReference {
      {"hNJetConstituents", "Number of constituents;N;entries", {HistType::kTH1F, {{100, -0.5, 99.5}}}},
      {"hConstituentPt", "Constituent pT; Constituent #it{p}_{T} (GeV/#it{c});entries", {HistType::kTH1F, {{100, 0., 100.}}}}}};
 
-  //Configurable<float> f_jetPtMin{"f_jetPtMin", 0.0, "minimum jet pT cut"};
-  Configurable<bool> b_DoConstSub{"b_DoConstSub", false, "do constituent subtraction"};
+  // Configurable<float> f_jetPtMin{"f_jetPtMin", 0.0, "minimum jet pT cut"};
+  // Filter jetCuts = aod::jet::pt > f_jetPtMin; //how does this work?
 
-  //Filter jetCuts = aod::jet::pt > f_jetPtMin; //how does this work?
-
-  void process(aod::Jet const& jet,
-               aod::Tracks const& tracks,
-               aod::JetTrackConstituents const& constituents,
-               aod::JetConstituentsSub const& constituentsSub)
+  void process(soa::Join<aod::ChargedJets, aod::ChargedJetConstituents>::iterator const& jet,
+               aod::Tracks const& /*tracks*/)
   {
     registry.fill(HIST("hJetPt"), jet.pt());
-    if (b_DoConstSub) {
-      registry.fill(HIST("hNJetConstituents"), constituentsSub.size());
-      for (const auto& constituent : constituentsSub) {
-        registry.fill(HIST("hConstituentPt"), constituent.pt());
-      }
-    } else {
-      registry.fill(HIST("hNJetConstituents"), constituents.size());
-      for (const auto& constituentIndex : constituents) {
-        auto constituent = constituentIndex.track();
-        registry.fill(HIST("hConstituentPt"), constituent.pt());
-      }
+    registry.fill(HIST("hNJetConstituents"), jet.tracks().size());
+    for (auto& constituent : jet.tracks_as<aod::Tracks>()) {
+      registry.fill(HIST("hConstituentPt"), constituent.pt());
     }
   }
 };

@@ -289,7 +289,7 @@ struct flow_base {
     return grpo->getNominalL3Field();
   }
 
-  void process(FilteredCollisions::iterator const& collision, BCsWithRun2Infos const& bcs, FilteredTracks const& tracks)
+  void process(FilteredCollisions::iterator const& collision, BCsWithRun2Infos const& /*bcs*/, FilteredTracks const& tracks)
   {
     // Some utilities
     //_______________________________________________________________________________
@@ -314,7 +314,7 @@ struct flow_base {
 
     auto getDoubleCountingP = [&](Double_t nSp, Short_t minNSigma) { return (nSp < nsigCut && minNSigma != 3); };
 
-    if ((eventSelection == 1) && (!collision.alias()[kINT7] || !collision.sel7())) {
+    if ((eventSelection == 1) && (!collision.alias_bit(kINT7) || !collision.sel7())) {
       // LOGF(info, "Collision index : %d skipped not kINT7", collision.index());
       return;
     }

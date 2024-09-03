@@ -14,12 +14,10 @@
 
 #ifndef TOOLS_KFPARTICLE_QAKFEVENTTRACK_H_
 #define TOOLS_KFPARTICLE_QAKFEVENTTRACK_H_
+
 #include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
 #include "Common/Core/trackUtilities.h"
-using namespace o2;
-using namespace o2::framework;
-using namespace o2::track;
 
 enum FlagsTracks {
   kITS = BIT(0),
@@ -44,9 +42,11 @@ DECLARE_SOA_COLUMN(ETA, Eta, float);
 DECLARE_SOA_COLUMN(PHI, Phi, float);
 DECLARE_SOA_COLUMN(TPCSIGNAL, Tpcsignal, float);
 DECLARE_SOA_COLUMN(RUNNUMBER, Runnumber, float);
-DECLARE_SOA_COLUMN(TIMECOLL, TimeColl, double);
+DECLARE_SOA_COLUMN(TIMECOLL, TimeColl, uint64_t);
 DECLARE_SOA_COLUMN(TIMESTAMP, TimeStamp, double);
 DECLARE_SOA_COLUMN(TIMEDIFF, TimeDiff, double);
+DECLARE_SOA_COLUMN(BCID, BCid, int);
+DECLARE_SOA_COLUMN(TFID, Tfid, int);
 DECLARE_SOA_COLUMN(XPV, Xpv, float);
 DECLARE_SOA_COLUMN(YPV, Ypv, float);
 DECLARE_SOA_COLUMN(ZPV, Zpv, float);
@@ -94,7 +94,9 @@ DECLARE_SOA_TABLE(TreeCollisions, "AOD", "TREECOLLISIONS",
                   kfeventtrack::RUNNUMBER,
                   kfeventtrack::TIMECOLL,
                   kfeventtrack::TIMESTAMP,
-                  kfeventtrack::TIMEDIFF);
+                  kfeventtrack::TIMEDIFF,
+                  kfeventtrack::BCID,
+                  kfeventtrack::TFID);
 } // namespace o2::aod
 
 #endif // TOOLS_KFPARTICLE_QAKFEVENTTRACK_H_

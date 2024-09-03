@@ -12,6 +12,12 @@
 add_subdirectory(Skimming)
 add_subdirectory(OpenData)
 add_subdirectory(ML)
+add_subdirectory(PWGEM)
+add_subdirectory(PWGUD)
+add_subdirectory(PWGLF)
+add_subdirectory(PWGCF)
+add_subdirectory(PWGMM)
+add_subdirectory(PWGHF)
 
 o2physics_add_dpl_workflow(histogram-track-selection
                     SOURCES src/histogramTrackSelection.cxx
@@ -103,7 +109,12 @@ o2physics_add_dpl_workflow(event-mixing-validation
 
 o2physics_add_dpl_workflow(mc-histograms
                   SOURCES src/mcHistograms.cxx
-                  PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2::FrameworkPhysicsSupport
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME AnalysisTutorial)
+
+o2physics_add_dpl_workflow(mc-only
+                  SOURCES src/mcOnly.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME AnalysisTutorial)
 
 o2physics_add_dpl_workflow(ccdbaccess
@@ -190,7 +201,7 @@ o2physics_add_dpl_workflow(conditional-expressions
 
 o2physics_add_dpl_workflow(using-pdg
                   SOURCES src/usingPDGService.cxx
-                  PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME AnalysisTutorial)
 
 o2physics_add_dpl_workflow(propagated-tracks
@@ -210,5 +221,15 @@ o2physics_add_dpl_workflow(reweighting
 
 o2physics_add_dpl_workflow(hep-mc
                   SOURCES src/hepMC.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework
+                  COMPONENT_NAME AnalysisTutorial)
+
+o2physics_add_dpl_workflow(preprocess
+                  SOURCES src/preprocess.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework
+                  COMPONENT_NAME AnalysisTutorial)
+
+o2physics_add_dpl_workflow(consume
+                  SOURCES src/consume.cxx
                   PUBLIC_LINK_LIBRARIES O2::Framework
                   COMPONENT_NAME AnalysisTutorial)

@@ -28,6 +28,7 @@
 #include "Framework/runDataProcessing.h"
 
 using namespace o2;
+using namespace o2::constants::math;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
@@ -84,7 +85,7 @@ struct PropagatedTracksExtra {
       {"hcrossedrows", ";track crossed rows;entries", {HistType::kTH1F, {{160, -0.5, 159.5}}}},
     }};
 
-  void process(aod::Collision const& collision, soa::Join<aod::Tracks, aod::TracksExtra> const& tracks)
+  void process(aod::Collision const& /*collision*/, soa::Join<aod::Tracks, aod::TracksExtra> const& tracks)
   {
     for (auto& track : tracks) {
       registry.fill(HIST("hpt"), track.pt());

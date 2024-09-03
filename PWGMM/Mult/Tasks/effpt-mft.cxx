@@ -39,7 +39,10 @@ AxisSpec ZAxis = {301, -30.1, 30.1};
 using MFTTracksLabeled = soa::Join<o2::aod::MFTTracks, aod::McMFTTrackLabels>;
 
 struct EffPtMFT {
-  Service<O2DatabasePDG> pdg;
+  SliceCache cache;
+  Preslice<aod::McParticles> perMCCol = aod::mcparticle::mcCollisionId;
+
+  Service<o2::framework::O2DatabasePDG> pdg;
 
   Configurable<bool> useEvSel{"useEvSel", true, "use event selection"};
   ConfigurableAxis PtAxis{"PtAxis", {1001, -0.0005, 1.0005}, "pt axis for histograms"};
@@ -173,7 +176,7 @@ struct EffPtMFT {
         continue;
       }
       auto mcCollision = collision.mcCollision();
-      auto particlesI = primariesI->sliceByCached(aod::mcparticle::mcCollisionId, mcCollision.globalIndex());
+      auto particlesI = primariesI->sliceByCached(aod::mcparticle::mcCollisionId, mcCollision.globalIndex(), cache);
       particlesI.bindExternalIndices(&tracks);
 
       for (auto& particle : particlesI) {

@@ -34,6 +34,8 @@
 #include "TProfile.h"
 #include "TFitResult.h"
 
+using namespace std;
+
 ClassImp(multGlauberNBDFitter);
 
 multGlauberNBDFitter::multGlauberNBDFitter() : TNamed(),
@@ -49,6 +51,7 @@ multGlauberNBDFitter::multGlauberNBDFitter() : TNamed(),
                                                fNNpNcPairs(-1),
                                                fMaxNpNcPairs(1000000),
                                                fMu(45),
+                                               fdMu(0.0),
                                                fk(1.5),
                                                ff(0.8),
                                                fnorm(100),
@@ -74,6 +77,12 @@ multGlauberNBDFitter::multGlauberNBDFitter() : TNamed(),
   fGlauberNBD->SetParameter(1, fk);
   fGlauberNBD->SetParameter(2, ff);
   fGlauberNBD->SetParameter(3, fnorm);
+
+  fGlauberNBD->SetParName(0, "mu");
+  fGlauberNBD->SetParName(1, "k");
+  fGlauberNBD->SetParName(2, "f");
+  fGlauberNBD->SetParName(3, "norm");
+  fGlauberNBD->SetParName(4, "dMu/dNanc");
 }
 
 multGlauberNBDFitter::multGlauberNBDFitter(const char* name, const char* title) : TNamed(name, title),
@@ -89,6 +98,7 @@ multGlauberNBDFitter::multGlauberNBDFitter(const char* name, const char* title) 
                                                                                   fNNpNcPairs(-1),
                                                                                   fMaxNpNcPairs(1000000),
                                                                                   fMu(45),
+                                                                                  fdMu(0.0),
                                                                                   fk(1.5),
                                                                                   ff(0.8),
                                                                                   fnorm(100),
@@ -109,11 +119,17 @@ multGlauberNBDFitter::multGlauberNBDFitter(const char* name, const char* title) 
 
   //master function
   fGlauberNBD = new TF1("fGlauberNBD", this, &multGlauberNBDFitter::ProbDistrib,
-                        0, 50000, 4, "multGlauberNBDFitter", "ProbDistrib");
+                        0, 50000, 5, "multGlauberNBDFitter", "ProbDistrib");
   fGlauberNBD->SetParameter(0, fMu);
   fGlauberNBD->SetParameter(1, fk);
   fGlauberNBD->SetParameter(2, ff);
   fGlauberNBD->SetParameter(3, fnorm);
+
+  fGlauberNBD->SetParName(0, "mu");
+  fGlauberNBD->SetParName(1, "k");
+  fGlauberNBD->SetParName(2, "f");
+  fGlauberNBD->SetParName(3, "norm");
+  fGlauberNBD->SetParName(4, "dMu/dNanc");
 }
 //________________________________________________________________
 multGlauberNBDFitter::~multGlauberNBDFitter()
@@ -183,7 +199,8 @@ Double_t multGlauberNBDFitter::ProbDistrib(Double_t* x, Double_t* par)
     Double_t lNancestorCount = fhNanc->GetBinContent(iNanc);
     //if(lNancestorCount<1e-12&&lNancestors>10) break;
 
-    Double_t lThisMu = (((Double_t)lNancestors)) * par[0];
+    // allow for variable mu in case requested
+    Double_t lThisMu = (((Double_t)lNancestors)) * (par[0] + par[4] * lNancestors);
     Double_t lThisk = (((Double_t)lNancestors)) * par[1];
     Double_t lpval = TMath::Power(1.0 + lThisMu / lThisk, -1);
     fNBD->SetParameter(1, lThisk);
@@ -352,7 +369,7 @@ Double_t multGlauberNBDFitter::ContinuousNBD(Double_t n, Double_t mu, Double_t k
   return F;
 }
 
-void multGlauberNBDFitter::CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCollProf)
+void multGlauberNBDFitter::CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCollProf, TH2F* lNPart2DPlot, TH2F* lNColl2DPlot, TH1F* hPercentileMap)
 {
   cout << "Calculating <Npart>, <Ncoll> in centrality bins..." << endl;
 
@@ -364,6 +381,7 @@ void multGlauberNBDFitter::CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCol
   //______________________________________________________
   Double_t lLoRange, lHiRange;
   fGlauberNBD->GetRange(lLoRange, lHiRange);
+  // bypass to zero
   for (int ibin = 0; ibin < fNNpNcPairs; ibin++) {
     if (ibin % 2000 == 0)
       cout << "At NpNc pair #" << ibin << " of " << fNNpNcPairs << "..." << endl;
@@ -386,8 +404,15 @@ void multGlauberNBDFitter::CalculateAvNpNc(TProfile* lNPartProf, TProfile* lNCol
       if (lMultValue > 1e-6)
         lMult = fAncestorMode != 2 ? fNBD->Eval(lMultValue) : ContinuousNBD(lMultValue, lThisMu, lThisk);
       Double_t lProbability = lNancestorCount * lMult;
-      lNPartProf->Fill(lMultValue, fNpart[ibin], lProbability);
-      lNCollProf->Fill(lMultValue, fNcoll[ibin], lProbability);
+      Double_t lMultValueToFill = lMultValue;
+      if (hPercentileMap)
+        lMultValueToFill = hPercentileMap->GetBinContent(hPercentileMap->FindBin(lMultValue));
+      lNPartProf->Fill(lMultValueToFill, fNpart[ibin], lProbability);
+      lNCollProf->Fill(lMultValueToFill, fNcoll[ibin], lProbability);
+      if (lNPart2DPlot)
+        lNPart2DPlot->Fill(lMultValueToFill, fNpart[ibin], lProbability);
+      if (lNColl2DPlot)
+        lNColl2DPlot->Fill(lMultValueToFill, fNcoll[ibin], lProbability);
     }
   }
 }

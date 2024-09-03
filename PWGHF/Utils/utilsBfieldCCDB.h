@@ -13,10 +13,14 @@
 /// \brief Utility to set the B field in analysis querying it from CCDB
 /// \author Mattia Faggin <mfaggin@cern.ch>, University and INFN Padova, Italy
 
+#ifndef PWGHF_UTILS_UTILSBFIELDCCDB_H_
+#define PWGHF_UTILS_UTILSBFIELDCCDB_H_
+
+#include <string> // std::string
+
 #include "CCDB/BasicCCDBManager.h"
-#include "DataFormatsParameters/GRPObject.h"
 #include "DataFormatsParameters/GRPMagField.h"
-#include "DetectorsBase/GeometryManager.h"
+#include "DataFormatsParameters/GRPObject.h"
 
 /// \brief Sets up the grp object for magnetic field (w/o matCorr for propagation)
 /// \param bc is the bunch crossing
@@ -29,9 +33,7 @@ void initCCDB(o2::aod::BCsWithTimestamps::iterator const& bc, int& mRunNumber,
               o2::framework::Service<o2::ccdb::BasicCCDBManager> const& ccdb, std::string const& ccdbPathGrp, o2::base::MatLayerCylSet* lut,
               bool isRun2)
 {
-
   if (mRunNumber != bc.runNumber()) {
-
     LOGF(info, "====== initCCDB function called (isRun2==%d)", isRun2);
     if (isRun2) { // Run 2 GRP object
       o2::parameters::GRPObject* grpo = ccdb->getForTimeStamp<o2::parameters::GRPObject>(ccdbPathGrp, bc.timestamp());
@@ -39,7 +41,6 @@ void initCCDB(o2::aod::BCsWithTimestamps::iterator const& bc, int& mRunNumber,
         LOGF(fatal, "Run 2 GRP object (type o2::parameters::GRPObject) is not available in CCDB for run=%d at timestamp=%llu", bc.runNumber(), bc.timestamp());
       }
       o2::base::Propagator::initFieldFromGRP(grpo);
-      o2::base::Propagator::Instance()->setMatLUT(lut);
       LOGF(info, "Setting magnetic field to %d kG for run %d from its GRP CCDB object (type o2::parameters::GRPObject)", grpo->getNominalL3Field(), bc.runNumber());
     } else { // Run 3 GRP object
       o2::parameters::GRPMagField* grpo = ccdb->getForTimeStamp<o2::parameters::GRPMagField>(ccdbPathGrp, bc.timestamp());
@@ -47,9 +48,13 @@ void initCCDB(o2::aod::BCsWithTimestamps::iterator const& bc, int& mRunNumber,
         LOGF(fatal, "Run 3 GRP object (type o2::parameters::GRPMagField) is not available in CCDB for run=%d at timestamp=%llu", bc.runNumber(), bc.timestamp());
       }
       o2::base::Propagator::initFieldFromGRP(grpo);
-      o2::base::Propagator::Instance()->setMatLUT(lut);
       LOGF(info, "Setting magnetic field to current %f A for run %d from its GRP CCDB object (type o2::parameters::GRPMagField)", grpo->getL3Current(), bc.runNumber());
+    }
+    if (lut) {
+      o2::base::Propagator::Instance()->setMatLUT(lut);
     }
     mRunNumber = bc.runNumber();
   }
 } /// end initCCDB
+
+#endif // PWGHF_UTILS_UTILSBFIELDCCDB_H_

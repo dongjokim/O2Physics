@@ -12,6 +12,8 @@
 #ifndef PWGUD_CORE_DGSELECTOR_H_
 #define PWGUD_CORE_DGSELECTOR_H_
 
+#include <vector>
+
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
 #include "Framework/Logger.h"
@@ -30,55 +32,66 @@ class DGSelector
   ~DGSelector() { delete fPDG; }
 
   template <typename CC, typename BCs, typename TCs, typename FWs>
-  int Print(DGCutparHolder diffCuts, CC& collision, BCs& bcRange, TCs& tracks, FWs& fwdtracks)
+  int Print(DGCutparHolder /*diffCuts*/, CC& collision, BCs& /*bcRange*/, TCs& /*tracks*/, FWs& /*fwdtracks*/)
   {
     LOGF(info, "Size of array %i", collision.size());
     return 1;
   }
 
-  // Function to check if collisions passes DG filter
+  // Function to check if collision passes DG filter
   template <typename CC, typename BCs, typename TCs, typename FWs>
   int IsSelected(DGCutparHolder diffCuts, CC& collision, BCs& bcRange, TCs& tracks, FWs& fwdtracks)
   {
     LOGF(debug, "Collision %f", collision.collisionTime());
     LOGF(debug, "Number of close BCs: %i", bcRange.size());
 
-    // check that there are no FIT signals in any of the compatible BCs
+    // return if FIT veto is found in any of the compatible BCs
     // Double Gap (DG) condition
-    auto lims = diffCuts.FITAmpLimits();
-
+    // 4 types of vetoes:
+    //  0 TVX
+    //  1 TSC
+    //  2 TCE
+    //  3 TOR
     for (auto const& bc : bcRange) {
-      LOGF(debug, "Amplitudes FV0A %f FT0 %f / %f FDD %i / %i",
-           bc.has_foundFV0() ? udhelpers::FV0AmplitudeA(bc.foundFV0()) : -1.,
-           bc.has_foundFT0() ? udhelpers::FT0AmplitudeA(bc.foundFT0()) : -1.,
-           bc.has_foundFT0() ? udhelpers::FT0AmplitudeC(bc.foundFT0()) : -1.,
-           bc.has_foundFDD() ? udhelpers::FDDAmplitudeA(bc.foundFDD()) : -1,
-           bc.has_foundFDD() ? udhelpers::FDDAmplitudeC(bc.foundFDD()) : -1);
-      LOGF(debug, "  clean FV0A %i FT0 %i FDD %i", udhelpers::cleanFV0(bc, lims[0]), udhelpers::cleanFT0(bc, lims[1], lims[2]), udhelpers::cleanFDD(bc, lims[3], lims[4]));
+      /* for debuging
+      auto isVetoed = udhelpers::FITveto(bc, diffCuts);
+      auto isClean = udhelpers::cleanFIT(bc, diffCuts.maxFITtime(), diffCuts.FITAmpLimits());
+      LOGF(info, "<IsSelected> isVetoed: %d isClean: %d", isVetoed, isClean);
+      if (isVetoed) {
+        return 1;
+      }
+      */
 
-      if (!udhelpers::cleanFIT(bc, diffCuts.FITAmpLimits())) {
+      if (udhelpers::FITveto(bc, diffCuts)) {
         return 1;
       }
     }
 
-    // no activity in forward direction
+    // forward tracks
     LOGF(debug, "FwdTracks %i", fwdtracks.size());
-    for (auto& fwdtrack : fwdtracks) {
-      LOGF(debug, "  %i / %f / %f / %f", fwdtrack.trackType(), fwdtrack.eta(), fwdtrack.pt(), fwdtrack.p());
-    }
-    if (fwdtracks.size() > 0) {
-      return 2;
+    if (!diffCuts.withFwdTracks()) {
+      for (auto& fwdtrack : fwdtracks) {
+        LOGF(debug, "  %i / %f / %f / %f / %f", fwdtrack.trackType(), fwdtrack.eta(), fwdtrack.pt(), fwdtrack.p(), fwdtrack.trackTimeRes());
+        // only consider tracks with MID (good timing)
+        if (fwdtrack.trackType() == 0 || fwdtrack.trackType() == 3) {
+          return 2;
+        }
+      }
     }
 
     // no global tracks which are not vtx tracks
     // no vtx tracks which are not global tracks
+    // no PV tracks with ITS only
     auto rgtrwTOF = 0.; // fraction of PV tracks with TOF hit
     for (auto& track : tracks) {
       if (track.isGlobalTrack() && !track.isPVContributor()) {
         return 3;
       }
-      if (diffCuts.globalTracksOnly() && !track.isGlobalTrack() && track.isPVContributor()) {
+      if (diffCuts.globalTracksOnly() && track.isPVContributor() && !track.isGlobalTrack()) {
         return 4;
+      }
+      if (!diffCuts.ITSOnlyTracks() && track.isPVContributor() && !track.hasTPC()) {
+        return 5;
       }
 
       // update fraction of PV tracks with TOF hit
@@ -90,12 +103,12 @@ class DGSelector
       rgtrwTOF /= collision.numContrib();
     }
     if (rgtrwTOF < diffCuts.minRgtrwTOF()) {
-      return 5;
+      return 6;
     }
 
     // number of vertex tracks
     if (collision.numContrib() < diffCuts.minNTracks() || collision.numContrib() > diffCuts.maxNTracks()) {
-      return 6;
+      return 7;
     }
 
     // PID, pt, and eta of tracks, invariant mass, and net charge
@@ -116,18 +129,18 @@ class DGSelector
 
         // PID
         // if (!udhelpers::hasGoodPID(diffCuts, track)) {
-        //   return 7;
+        //   return 8;
         // }
 
         // pt
         lvtmp.SetXYZM(track.px(), track.py(), track.pz(), mass2Use);
         if (lvtmp.Perp() < diffCuts.minPt() || lvtmp.Perp() > diffCuts.maxPt()) {
-          return 8;
+          return 9;
         }
 
         // eta
         if (lvtmp.Eta() < diffCuts.minEta() || lvtmp.Eta() > diffCuts.maxEta()) {
-          return 9;
+          return 10;
         }
         netCharge += track.sign();
         ivm += lvtmp;
@@ -137,11 +150,46 @@ class DGSelector
     // net charge
     auto netChargeValues = diffCuts.netCharges();
     if (std::find(netChargeValues.begin(), netChargeValues.end(), netCharge) == netChargeValues.end()) {
-      return 10;
+      return 11;
     }
     // invariant mass
     if (ivm.M() < diffCuts.minIVM() || ivm.M() > diffCuts.maxIVM()) {
-      return 11;
+      return 12;
+    }
+
+    // good collision selection according to event-selection task
+    /* if (!goodCollision(collision, diffCuts)){
+      return 13;
+    }*/
+    // good collision selection per-partes
+    std::vector<int> sels = diffCuts.collisionSel();
+    // timeframe border
+    if (sels[0] && !udhelpers::cutNoTimeFrameBorder(collision)) {
+      return 13;
+    }
+    // same bunch pileup
+    if (sels[1] && !udhelpers::cutNoSameBunchPileup(collision)) {
+      return 14;
+    }
+    // ITS ROF border
+    if (sels[2] && !udhelpers::cutNoITSROFrameBorder(collision)) {
+      return 15;
+    }
+    // z-vtx from PV and FT0 agrees
+    if (sels[3] && !udhelpers::cutIsGoodZvtxFT0vsPV(collision)) {
+      return 16;
+    }
+    // at least one PV track with TPC hit
+    if (sels[4] && !udhelpers::cutIsVertexITSTPC(collision)) {
+      return 17;
+    }
+    // at least one PV track with TRD hit
+    if (sels[5] && !udhelpers::cutIsVertexTRDmatched(collision)) {
+      return 18;
+    }
+    // at least one PV track with TOF hit
+    if (sels[6] && !udhelpers::cutIsVertexTOFmatched(collision)) {
+      return 19;
     }
 
     // if we arrive here then the event is good!
@@ -152,26 +200,33 @@ class DGSelector
   template <typename BCs, typename TCs, typename FWs>
   int IsSelected(DGCutparHolder diffCuts, BCs& bcRange, TCs& tracks, FWs& fwdtracks)
   {
-    // check that there are no FIT signals in bcRange
+    // return if FIT veto is found in any of the compatible BCs
     // Double Gap (DG) condition
+    // 4 types of vetoes:
+    //  0 TVX
+    //  1 TSC
+    //  2 TCE
+    //  3 TOR
     for (auto const& bc : bcRange) {
-      if (!udhelpers::cleanFIT(bc, diffCuts.FITAmpLimits())) {
+      if (udhelpers::FITveto(bc, diffCuts)) {
         return 1;
       }
     }
 
     // no activity in muon arm
-    LOGF(debug, "FwdTracks %i", fwdtracks.size());
-    for (auto& fwdtrack : fwdtracks) {
-      LOGF(debug, "  %i / %f / %f / %f", fwdtrack.trackType(), fwdtrack.eta(), fwdtrack.pt(), fwdtrack.p());
-    }
-    if (fwdtracks.size() > 0) {
-      return 2;
+    if (!diffCuts.withFwdTracks()) {
+      for (auto& fwdtrack : fwdtracks) {
+        LOGF(info, "  %i / %f / %f / %f / %f", fwdtrack.trackType(), fwdtrack.eta(), fwdtrack.pt(), fwdtrack.p(), fwdtrack.trackTimeRes());
+        // only consider tracks with MID (good timing)
+        if (fwdtrack.trackType() == 0 || fwdtrack.trackType() == 3) {
+          return 2;
+        }
+      }
     }
 
     // number of tracks
     if (static_cast<int>(tracks.size()) < diffCuts.minNTracks() || static_cast<int>(tracks.size()) > diffCuts.maxNTracks()) {
-      return 6;
+      return 7;
     }
 
     // PID, pt, and eta of tracks, invariant mass, and net charge
@@ -188,18 +243,18 @@ class DGSelector
     for (auto& track : tracks) {
       // PID
       if (!udhelpers::hasGoodPID(diffCuts, track)) {
-        return 7;
+        return 8;
       }
 
       // pt
       lvtmp.SetXYZM(track.px(), track.py(), track.pz(), mass2Use);
       if (lvtmp.Perp() < diffCuts.minPt() || lvtmp.Perp() > diffCuts.maxPt()) {
-        return 8;
+        return 9;
       }
 
       // eta
       if (lvtmp.Eta() < diffCuts.minEta() || lvtmp.Eta() > diffCuts.maxEta()) {
-        return 9;
+        return 10;
       }
       netCharge += track.sign();
       ivm += lvtmp;
@@ -208,12 +263,12 @@ class DGSelector
     // net charge
     auto netChargeValues = diffCuts.netCharges();
     if (std::find(netChargeValues.begin(), netChargeValues.end(), netCharge) == netChargeValues.end()) {
-      return 10;
+      return 11;
     }
 
     // invariant mass
     if (ivm.M() < diffCuts.minIVM() || ivm.M() > diffCuts.maxIVM()) {
-      return 11;
+      return 12;
     }
 
     // if we arrive here then the event is good!

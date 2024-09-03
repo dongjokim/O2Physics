@@ -13,13 +13,11 @@
 #define PWGUD_CORE_DGPIDSELECTOR_H_
 
 #include <gandiva/projector.h>
-#include <string>
 #include <vector>
+#include <TVector3.h>
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
-#include "PWGUD/DataModel/UDTables.h"
-
-using namespace o2;
+#include "Framework/Logger.h"
 
 const int numDGPIDCutParameters = 9;
 float particleMass(TDatabasePDG* pdg, int pid);
@@ -106,14 +104,23 @@ struct DGPIDCuts {
 struct DGAnaparHolder {
  public:
   // constructor
-  DGAnaparHolder(int nCombine = 2, float maxDCAxy = 100., float maxDCAz = 100,
+  DGAnaparHolder(int MinNTracks = 0, int MaxNTracks = 10000, float minrgtrwTOF = 0.,
+                 float maxDCAxy = 100., float maxDCAz = 100,
                  int dBCMin = 0, int dBCMax = 0,
-                 float minptsys = 0.0, float maxptsys = 100.0,
+                 std::vector<int> FITvetoes = {0, 1, 1, 0, 0},
+                 bool ITSonlyTracks = true,
+                 int minNClTPC = 0, int maxNClTPC = 200,
+                 float minChi2NClTPC = 0., float maxChi2NClTPC = 100.,
                  float minpt = 0.0, float maxpt = 100.0,
+                 float mineta = -2.0, float maxeta = 2.0,
                  float minalpha = 0.0, float maxalpha = 3.2,
-                 std::vector<int> netCharges = {-2, -1, 0, 1, 2},
-                 std::vector<float> DGPIDs = {211, 211},
-                 std::vector<float> DGPIDCutValues = {}) : mNCombine{nCombine}, mdBCMin{dBCMin}, mdBCMax{dBCMax}, mMaxDCAxy{maxDCAxy}, mMaxDCAz{maxDCAz}, mMinpt{minpt}, mMaxpt{maxpt}, mMinptsys{minptsys}, mMaxptsys{maxptsys}, mMinAlpha{minalpha}, mMaxAlpha{maxalpha}, mNetCharges{netCharges}, mDGPIDs{DGPIDs}, mDGPIDCutValues{DGPIDCutValues}
+                 float minptsys = 0.0, float maxptsys = 100.0,
+                 int nCombine = 2,
+                 std::vector<int> netCharges = {0},
+                 std::vector<int> unlikeCharges = {0},
+                 std::vector<int> likeCharges = {-2, 2},
+                 std::vector<int> DGPIDs = {211, 211},
+                 std::vector<float> DGPIDCutValues = {}) : mMinNTracks{MinNTracks}, mMaxNTracks{MaxNTracks}, mMinRgtrwTOF{minrgtrwTOF}, mMaxDCAxy{maxDCAxy}, mMaxDCAz{maxDCAz}, mdBCMin{dBCMin}, mdBCMax{dBCMax}, mFITvetoes{FITvetoes}, mITSOnlyTracks{ITSonlyTracks}, mMinNClTPC{minNClTPC}, mMaxNClTPC{maxNClTPC}, mMinChi2NClTPC{minChi2NClTPC}, mMaxChi2NClTPC{maxChi2NClTPC}, mMinpt{minpt}, mMaxpt{maxpt}, mMineta{mineta}, mMaxeta{maxeta}, mMinAlpha{minalpha}, mMaxAlpha{maxalpha}, mMinptsys{minptsys}, mMaxptsys{maxptsys}, mNCombine{nCombine}, mNetCharges{netCharges}, mUnlikeCharges{unlikeCharges}, mLikeCharges{likeCharges}, mDGPIDs{DGPIDs}, mDGPIDCutValues{DGPIDCutValues}
   {
     if (mdBCMin < -16) {
       mdBCMin = -16;
@@ -125,63 +132,95 @@ struct DGAnaparHolder {
     } else if (mdBCMax > 15) {
       mdBCMax = 15;
     }
-
     makeUniquePermutations();
   }
   ~DGAnaparHolder();
 
-  // getter
+  // helper
   void Print();
-  int nCombine() const { return mNCombine; }
+
+  // setter
+  void SetNTracks(int, int);
+  void SetMinRgtrwTOF(float);
+  void SetmaxDCA(float, float);
+  void SetdBC(int, int);
+  void SetFITvetoes(std::vector<int>);
+  void SetITSOnlyTracks(bool);
+  void SetNClTPC(int, int);
+  void SetChi2NClTPC(float, float);
+  void Setpt(float, float);
+  void Seteta(float, float);
+  void SetAlpha(float, float);
+  void Setptsys(float, float);
+  void SetnCombine(int);
+  void SetnetCharges(std::vector<int>);
+  void SetunlikeCharges(std::vector<int>);
+  void SetlikeCharges(std::vector<int>);
+  void SetPIDs(std::vector<int>);
+
+  // getter
+  int minNTracks() const { return mMinNTracks; }
+  int maxNTracks() const { return mMaxNTracks; }
+  float minRgtrwTOF() const { return mMinRgtrwTOF; }
+  float maxDCAxy() const { return mMaxDCAxy; }
+  float maxDCAz() const { return mMaxDCAz; }
   int dBCMin() const { return mdBCMin; }
   int dBCMax() const { return mdBCMax; }
-  float maxDCAxy() { return mMaxDCAxy; }
-  float maxDCAz() { return mMaxDCAz; }
-  float minptsys() { return mMinptsys; }
-  float maxptsys() { return mMaxptsys; }
-  float minpt() { return mMinpt; }
-  float maxpt() { return mMaxpt; }
-  float minAlpha() { return mMinAlpha; }
-  float maxAlpha() { return mMaxAlpha; }
-  std::vector<int> netCharges() { return mNetCharges; }
-  std::vector<float> PIDs() { return mDGPIDs; }
+  std::vector<int> FITvetoes() { return mFITvetoes; }
+  bool ITSOnlyTracks() { return mITSOnlyTracks; }
+  int minNClTPC() { return mMinNClTPC; }
+  int maxNClTPC() { return mMaxNClTPC; }
+  float minChi2NClTPC() { return mMinChi2NClTPC; }
+  float maxChi2NClTPC() { return mMaxChi2NClTPC; }
+  float minpt() const { return mMinpt; }
+  float maxpt() const { return mMaxpt; }
+  float mineta() const { return mMineta; }
+  float maxeta() const { return mMaxeta; }
+  float minAlpha() const { return mMinAlpha; }
+  float maxAlpha() const { return mMaxAlpha; }
+  float minptsys() const { return mMinptsys; }
+  float maxptsys() const { return mMaxptsys; }
+  int nCombine() const { return mNCombine; }
+  std::vector<int> netCharges() const { return mNetCharges; }
+  std::vector<int> unlikeCharges() const { return mUnlikeCharges; }
+  std::vector<int> likeCharges() const { return mLikeCharges; }
+  std::vector<int> PIDs() const { return mDGPIDs; }
   DGPIDCuts PIDCuts();
   std::vector<int> uniquePermutations();
 
  private:
   // helper functions
-  void permutations(std::vector<uint>& ref, int n0, int np, std::vector<std::vector<uint>>& perms);
-  int permutations(int n0, std::vector<std::vector<uint>>& perms);
+  void permutations(std::vector<int>& ref, int n0, int np, std::vector<std::vector<int>>& perms);
+  int permutations(int n0, std::vector<std::vector<int>>& perms);
   void makeUniquePermutations();
 
-  // number of tracks to combine
-  int mNCombine;
-
-  // BBFlags
-  int mdBCMin;
-  int mdBCMax;
-
-  // dca of tracks
+  // arguments
+  int mMinNTracks;
+  int mMaxNTracks;
+  float mMinRgtrwTOF;
   float mMaxDCAxy;
   float mMaxDCAz;
-
-  // pt-range of tracks
+  int mdBCMin;
+  int mdBCMax;
+  std::vector<int> mFITvetoes;
+  bool mITSOnlyTracks;
+  int mMinNClTPC;
+  int mMaxNClTPC;
+  float mMinChi2NClTPC;
+  float mMaxChi2NClTPC;
   float mMinpt;
   float mMaxpt;
-
-  // pt-range of system
-  float mMinptsys;
-  float mMaxptsys;
-
-  // alpha-range when 2 tracks
+  float mMineta;
+  float mMaxeta;
   float mMinAlpha;
   float mMaxAlpha;
-
-  // net charge of all tracks
-  std::vector<int> mNetCharges;
-
-  // PID information
-  std::vector<float> mDGPIDs;
+  float mMinptsys;
+  float mMaxptsys;
+  int mNCombine;
+  std::vector<int> mNetCharges;    // all PV tracks
+  std::vector<int> mUnlikeCharges; // selected PV tracks
+  std::vector<int> mLikeCharges;   // selected PV tracks
+  std::vector<int> mDGPIDs;
   std::vector<float> mDGPIDCutValues;
 
   // unique permutations
@@ -196,7 +235,7 @@ struct DGParticle {
  public:
   DGParticle();
   template <typename TTrack>
-  DGParticle(TDatabasePDG* pdg, DGAnaparHolder anaPars, TTrack const& tracks, std::vector<uint> comb)
+  DGParticle(TDatabasePDG* pdg, DGAnaparHolder anaPars, TTrack const& tracks, std::vector<int> comb)
   {
     // compute invariant mass
     TLorentzVector lvtmp;
@@ -219,7 +258,7 @@ struct DGParticle {
 
   // getter
   void Print();
-  std::vector<uint> trkinds() { return mtrkinds; }
+  std::vector<int> trkinds() { return mtrkinds; }
   float M() { return mIVM.M(); }
   float Perp() { return mIVM.Perp(); }
 
@@ -228,7 +267,7 @@ struct DGParticle {
   TLorentzVector mIVM;
 
   // indices of tracks included
-  std::vector<uint> mtrkinds;
+  std::vector<int> mtrkinds;
 
   // ClassDefNV(DGParticle, 1);
 };
@@ -246,18 +285,16 @@ struct DGPIDSelector {
   // getters
   void Print();
   template <typename TTrack>
-  bool isGoodCombination(std::vector<uint> comb, TTrack const& tracks)
+  bool isGoodCombination(std::vector<int> comb, TTrack const& tracks, std::vector<int> acceptedCharges)
   {
     // compute net charge of track combination
     int netCharge = 0.;
     for (auto const& ind : comb) {
       netCharge += (tracks.begin() + ind).sign();
     }
-    LOGF(debug, "Net charge %i", netCharge);
 
     // is this in the list of accepted net charges?
-    auto netCharges = mAnaPars.netCharges();
-    if (std::find(netCharges.begin(), netCharges.end(), netCharge) != netCharges.end()) {
+    if (std::find(acceptedCharges.begin(), acceptedCharges.end(), netCharge) != acceptedCharges.end()) {
       return true;
     }
     return false;
@@ -275,39 +312,58 @@ struct DGPIDSelector {
       return false;
     }
 
-    // cut on dcaXY and dcaZ
-    // LOGF(debug, "mAnaPars.maxDCAxyz %f %f", mAnaPars.maxDCAxy(), mAnaPars.maxDCAz());
-    // if (track.dcaXY() < -abs(mAnaPars.maxDCAxy()) || track.dcaXY() > abs(mAnaPars.maxDCAxy())) {
-    //  return false;
-    //}
+    // check ITS only
+    if (!mAnaPars.ITSOnlyTracks() && !track.hasTPC()) {
+      return false;
+    }
 
-    // if (track.dcaZ() < -abs(mAnaPars.maxDCAz()) || track.dcaZ() > abs(mAnaPars.maxDCAz())) {
-    //   return false;
-    // }
+    // check ncluster TPC
+    auto nTPCCL = track.tpcNClsFindable() - track.tpcNClsFindableMinusFound();
+    if (nTPCCL < mAnaPars.minNClTPC() || nTPCCL > mAnaPars.maxNClTPC()) {
+      return false;
+    }
+
+    // check chi2 per ncluster TPC
+    auto chi2NClTPC = track.tpcChi2NCl();
+    if (chi2NClTPC < mAnaPars.minChi2NClTPC() || chi2NClTPC > mAnaPars.maxChi2NClTPC()) {
+      return false;
+    }
+
+    // check pt of track
+    if (track.pt() < mAnaPars.minpt() || track.pt() > mAnaPars.maxpt()) {
+      return false;
+    }
+
+    // check eta of track
+    auto v = TVector3(track.px(), track.py(), track.pz());
+    if (v.Eta() < mAnaPars.mineta() || v.Eta() > mAnaPars.maxeta()) {
+      return false;
+    }
+
+    // cut on dcaXY and dcaZ
+    LOGF(debug, "mAnaPars.maxDCAxyz %f %f", mAnaPars.maxDCAxy(), mAnaPars.maxDCAz());
+    if (track.dcaXY() < -abs(mAnaPars.maxDCAxy()) || track.dcaXY() > abs(mAnaPars.maxDCAxy())) {
+      return false;
+    }
+    if (track.dcaZ() < -abs(mAnaPars.maxDCAz()) || track.dcaZ() > abs(mAnaPars.maxDCAz())) {
+      return false;
+    }
 
     // loop over all PIDCuts and apply the ones which apply to this track
     auto pidcuts = mAnaPars.PIDCuts().Cuts();
     for (auto pidcut : pidcuts) {
 
       // skip cut if it does not apply to this track
-      LOGF(debug, "nPart %i %i, Type %i Apply %i", pidcut.nPart(), cnt, pidcut.cutType(), pidcut.cutApply());
       if (pidcut.nPart() != cnt || pidcut.cutApply() <= 0) {
         continue;
       }
 
-      // check pt of track
-      if (track.pt() < mAnaPars.minpt() || track.pt() > mAnaPars.maxpt()) {
-        return false;
-      }
-
       // check pt for pid cut
-      LOGF(debug, "pT %f %f %f", track.pt(), pidcut.cutPtMin(), pidcut.cutPtMax());
       if (track.pt() < pidcut.cutPtMin() || track.pt() > pidcut.cutPtMax()) {
         continue;
       }
 
       // is detector information required
-      LOGF(debug, "TPC %i TOF %i", track.hasTPC(), track.hasTOF());
       if (pidcut.cutApply() == 2) {
         if (pidcut.cutDetector() == 1 && !track.hasTPC()) {
           return false;
@@ -318,7 +374,6 @@ struct DGPIDSelector {
       }
 
       // get detector value
-      LOGF(debug, "cutPID %i", pidcut.cutPID());
       float detValue = 0.;
       if (pidcut.cutDetector() == 1) {
         if (!track.hasTPC()) {
@@ -357,42 +412,47 @@ struct DGPIDSelector {
       }
     }
 
+    // the track is good if we arrive here
     return true;
   }
+
   template <typename TTrack>
-  int computeIVMs(TTrack const& tracks)
+  std::vector<int> computeIVMs(TTrack const& tracks)
   {
     // reset
-    mIVMs.clear();
+    mUnlikeIVMs.clear();
+    mLikeIVMs.clear();
 
     // create combinations including permutations
     auto combs = combinations(tracks.size());
 
     // loop over unique combinations
     for (auto comb : combs) {
-      // is combination compatible with netCharge requirements?
-      if (!isGoodCombination(comb, tracks)) {
-        continue;
-      }
-      // is tracks compatible with PID requirements?
-      bool isGoodComb = true;
+      // are tracks compatible with PID requirements?
+      bool isGoodTracks = true;
       auto cnt = -1;
       for (auto ind : comb) {
         cnt++;
         if (!isGoodTrack(tracks.begin() + ind, cnt)) {
-          isGoodComb = false;
+          isGoodTracks = false;
           break;
         }
       }
 
-      // update list of IVMs
-      if (isGoodComb) {
+      // is combination compatible with netCharge requirements?
+      if (isGoodTracks) {
         DGParticle IVM(fPDG, mAnaPars, tracks, comb);
-        mIVMs.push_back(IVM);
+        // unlike sign
+        if (isGoodCombination(comb, tracks, mAnaPars.unlikeCharges())) {
+          mUnlikeIVMs.push_back(IVM);
+        }
+        if (isGoodCombination(comb, tracks, mAnaPars.likeCharges())) {
+          mLikeIVMs.push_back(IVM);
+        }
       }
     }
 
-    return mIVMs.size();
+    return std::vector<int>{static_cast<int>(mUnlikeIVMs.size()), static_cast<int>(mLikeIVMs.size())};
   }
 
   DGAnaparHolder getAnaPars() { return mAnaPars; }
@@ -434,7 +494,8 @@ struct DGPIDSelector {
         return 0.;
     }
   }
-  std::vector<DGParticle> IVMs() { return mIVMs; }
+  std::vector<DGParticle> unlikeIVMs() { return mUnlikeIVMs; }
+  std::vector<DGParticle> likeIVMs() { return mLikeIVMs; }
 
   int pid2ind(int pid);
 
@@ -443,16 +504,17 @@ struct DGPIDSelector {
   DGAnaparHolder mAnaPars;
 
   // list of DGParticles
-  std::vector<DGParticle> mIVMs;
+  std::vector<DGParticle> mUnlikeIVMs;
+  std::vector<DGParticle> mLikeIVMs;
 
   // particle properties
   TDatabasePDG* fPDG;
 
   // helper functions for computeIVMs
-  void combinations(int n0, std::vector<uint>& pool, int np, std::vector<uint>& inds, int n,
-                    std::vector<std::vector<uint>>& combs);
-  int combinations(int n0, int np, std::vector<std::vector<uint>>& combs);
-  std::vector<std::vector<uint>> combinations(int nPool);
+  void combinations(int n0, std::vector<int>& pool, int np, std::vector<int>& inds, int n,
+                    std::vector<std::vector<int>>& combs);
+  int combinations(int n0, int np, std::vector<std::vector<int>>& combs);
+  std::vector<std::vector<int>> combinations(int nPool);
 
   // ClassDefNV(DGPIDSelector, 1);
 };
